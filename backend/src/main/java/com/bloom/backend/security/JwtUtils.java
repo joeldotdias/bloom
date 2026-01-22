@@ -45,6 +45,10 @@ public class JwtUtils {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
     private<T> T extractClaim(String token, Function<Claims, T> resolver) {
         final Claims claims = extractAllClaims(token);
         return resolver.apply(claims);

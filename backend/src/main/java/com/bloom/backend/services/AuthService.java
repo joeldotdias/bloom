@@ -5,21 +5,29 @@ import com.bloom.backend.dto.RegisterRequest;
 import com.bloom.backend.models.Role;
 import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.UserRepository;
+import com.bloom.backend.security.AuthUserDetails;
 import com.bloom.backend.security.JwtUtils;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
+    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
+    private final BlacklistService blacklistService;
 
-    public AuthService(UserRepository userRepository, JwtUtils jwtUtils, PasswordEncoder passwordEncoder) {
+    public AuthService(AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtils jwtUtils, PasswordEncoder passwordEncoder, BlacklistService blacklistService) {
+        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtUtils = jwtUtils;
         this.passwordEncoder = passwordEncoder;
+        this.blacklistService = blacklistService;
     }
 
     public String register(RegisterRequest request) {
@@ -36,23 +44,39 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        String token = jwtUtils.generateToken(savedUser.getUsername(), savedUser.getRole());
-        return token;
+        return jwtUtils.generateToken(savedUser.getUsername(), savedUser.getRole());
     }
 
     public String login(LoginRequest request) {
-        User user = userRepository.findUserByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("couldn't find user: " + request.getUsername()));
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("wrong password");
+        AuthUserDetails userDetails = (AuthUserDetails) authentication.getPrincipal();
+        if (userDetails == null) {
+            throw new RuntimeException("Invalid details");
         }
 
-        if (user.isBanned()) {
-            throw new RuntimeException("oops your account is banned");
-        }
+        return jwtUtils.generateToken(userDetails.getUsername(), Role.USER);
+    }
 
-        String token = jwtUtils.generateToken(user.getUsername(), user.getRole());
-        return token;
+//    public String login(LoginRequest request) {
+//        User user = userRepository.findUserByUsername(request.getUsername())
+//                .orElseThrow(() -> new RuntimeException("couldn't find user: " + request.getUsername()));
+//
+//        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+//            throw new RuntimeException("wrong password");
+//        }
+//
+//        if (user.isBanned()) {
+//            throw new RuntimeException("oops your account is banned");
+//        }
+//
+//        String token = jwtUtils.generateToken(user.getUsername(), user.getRole());
+//        return token;
+//    }
+
+    public void logout(String token) {
+        blacklistService.blacklistToken(token);
     }
 }

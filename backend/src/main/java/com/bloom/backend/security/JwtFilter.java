@@ -1,5 +1,6 @@
 package com.bloom.backend.security;
 
+import com.bloom.backend.services.BlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -20,10 +21,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     private final AuthUserDetailsService userDetailsService;
+    private final BlacklistService blacklistService;
 
-    public JwtFilter(JwtUtils jwtUtils, AuthUserDetailsService userDetailsService) {
+    public JwtFilter(JwtUtils jwtUtils, AuthUserDetailsService userDetailsService, BlacklistService blacklistService) {
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
+        this.blacklistService = blacklistService;
     }
 
     @Override
@@ -44,6 +47,11 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         if (jwt == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (blacklistService.isBlacklisted(jwt)) {
             filterChain.doFilter(request, response);
             return;
         }
