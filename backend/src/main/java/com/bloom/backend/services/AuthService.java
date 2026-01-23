@@ -2,6 +2,7 @@ package com.bloom.backend.services;
 
 import com.bloom.backend.dto.LoginRequest;
 import com.bloom.backend.dto.RegisterRequest;
+import com.bloom.backend.models.RefreshToken;
 import com.bloom.backend.models.Role;
 import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.UserRepository;
@@ -20,17 +21,26 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
     private final BlacklistService blacklistService;
 
-    public AuthService(AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtils jwtUtils, PasswordEncoder passwordEncoder, BlacklistService blacklistService) {
+    public AuthService(
+            AuthenticationManager authenticationManager,
+            UserRepository userRepository,
+            JwtUtils jwtUtils,
+            PasswordEncoder passwordEncoder,
+            RefreshTokenService refreshTokenService,
+            BlacklistService blacklistService
+    ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtUtils = jwtUtils;
         this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
         this.blacklistService = blacklistService;
     }
 
-    public String register(RegisterRequest request) {
+    public TokenPair register(RegisterRequest request, String ipAddr, String deviceInfo) {
         if (userRepository.findUserByUsername(request.getUsername()).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
@@ -44,10 +54,18 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        return jwtUtils.generateToken(savedUser.getUsername(), savedUser.getRole());
+        String accessToken = jwtUtils.generateToken(savedUser.getUsername(), savedUser.getRole());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(
+            savedUser.getUsername(),
+            savedUser.getRole(),
+            ipAddr,
+            deviceInfo
+        );
+
+        return new TokenPair(accessToken, refreshToken.getId());
     }
 
-    public String login(LoginRequest request) {
+    public TokenPair login(LoginRequest request, String ipAddr, String deviceInfo) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
@@ -57,26 +75,44 @@ public class AuthService {
             throw new RuntimeException("Invalid details");
         }
 
-        return jwtUtils.generateToken(userDetails.getUsername(), Role.USER);
+        String accessToken = jwtUtils.generateToken(userDetails.getUsername(), Role.USER);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(
+                userDetails.getUsername(),
+                Role.USER, // change this
+                ipAddr,
+                deviceInfo
+        );
+
+        return new TokenPair(accessToken, refreshToken.getId());
     }
 
-//    public String login(LoginRequest request) {
-//        User user = userRepository.findUserByUsername(request.getUsername())
-//                .orElseThrow(() -> new RuntimeException("couldn't find user: " + request.getUsername()));
-//
-//        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-//            throw new RuntimeException("wrong password");
-//        }
-//
-//        if (user.isBanned()) {
-//            throw new RuntimeException("oops your account is banned");
-//        }
-//
-//        String token = jwtUtils.generateToken(user.getUsername(), user.getRole());
-//        return token;
-//    }
+    public TokenPair regenerateTokenPair(String refreshTokenId, String ipAddress, String deviceInfo) {
+        RefreshToken oldRefreshToken = refreshTokenService.verifyRefreshToken(refreshTokenId);
 
-    public void logout(String token) {
-        blacklistService.blacklistToken(token);
+        refreshTokenService.deleteRefreshToken(refreshTokenId);
+
+        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(
+            oldRefreshToken.getUsername(),
+            oldRefreshToken.getRole(),
+            ipAddress,
+            deviceInfo
+        );
+
+        String newAccessToken = jwtUtils.generateToken(
+            oldRefreshToken.getUsername(),
+            oldRefreshToken.getRole()
+        );
+
+        return new TokenPair(newAccessToken, newRefreshToken.getId());
+    }
+
+    public void logout(String accessToken, String refreshTokenId) {
+        if (accessToken != null) {
+            blacklistService.blacklistToken(accessToken);
+        }
+
+        if (refreshTokenId != null) {
+            refreshTokenService.deleteRefreshToken(refreshTokenId);
+        }
     }
 }
