@@ -17,10 +17,10 @@ import java.util.function.Function;
 public class JwtUtils {
 
     @Value("${jwt.secret}")
-    private String SECRET_BASE64;// = "mXaEi5cdZOCbWQT9/2VxliMOzp7Wnpl3UlVsijqdydw=";
+    private String SECRET_BASE64;
 
     @Value("${jwt.expiration}")
-    private long EXPIRATION_MS;// = 900000L;
+    private long EXPIRATION_MS;
 
     public String generateToken(String username, Role role) {
         return Jwts.builder()

@@ -1,6 +1,7 @@
 package com.bloom.backend.security;
 
 import com.bloom.backend.services.BlacklistService;
+import com.bloom.backend.utils.CookieUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -35,16 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        String jwt = null;
-
-        if (request.getCookies() != null) {
-            for (Cookie cookie: request.getCookies()) {
-                if ("token".equals(cookie.getName())) {
-                    jwt = cookie.getValue();
-                    break;
-                }
-            }
-        }
+        String jwt = CookieUtils.extractAccessToken(request);
 
         if (jwt == null) {
             filterChain.doFilter(request, response);
