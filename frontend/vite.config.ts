@@ -5,7 +5,6 @@ import viteReact from '@vitejs/plugin-react'
 
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     devtools(),
@@ -15,6 +14,15 @@ export default defineConfig({
     }),
     viteReact(),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
