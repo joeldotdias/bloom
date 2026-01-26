@@ -12,7 +12,6 @@ api.interceptors.response.use(
 
     // to prevent infinite loop in case the failed request is already a refresh attempt
     if (originalRequest.url.includes('/auth/refresh')) {
-      // window.location.href = '/login'
       return Promise.reject(err)
     }
 
@@ -23,7 +22,6 @@ api.interceptors.response.use(
         await api.post('/auth/refresh')
         return api(originalRequest)
       } catch (refreshErr) {
-        // window.location.href = '/login'
         return Promise.reject(refreshErr)
       }
     }

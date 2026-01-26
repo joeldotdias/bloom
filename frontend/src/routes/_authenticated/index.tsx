@@ -2,11 +2,11 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/lib/auth.ts'
 
-export const Route = createFileRoute('/_authenticated/home')({
-  component: Home,
+export const Route = createFileRoute('/_authenticated/')({
+  component: App,
 })
 
-function Home() {
+function App() {
   const { data: user } = useQuery({
     queryKey: ['session'],
     queryFn: authApi.getMe,

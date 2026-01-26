@@ -72,7 +72,7 @@ function Register() {
         message: 'You can now enjoy your new account.',
         color: 'green',
       })
-      await navigate({ to: '/home' })
+      await navigate({ to: '/' })
     },
     onError: (err) => {
       notifications.show({

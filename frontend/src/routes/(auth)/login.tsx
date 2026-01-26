@@ -59,7 +59,7 @@ function Login() {
       })
 
       await router.invalidate()
-      await navigate({ to: search.redirect || '/home' })
+      await navigate({ to: search.redirect || '/' })
     },
     onError: (err) => {
       notifications.show({
