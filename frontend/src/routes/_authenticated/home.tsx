@@ -30,9 +30,16 @@ function LogoutButton() {
   const logoutMutation = useMutation({
     mutationFn: authApi.logout,
     onSuccess: async () => {
-      queryClient.setQueryData(['session'], null)
+      await router.navigate({ to: '/login' })
+      // reminder for my own insanity since this took way too long to figure out
+      // setQueryData ['session'] to null doesn't work
+      // coz re logging in would just get null from the cache instead of refetching
+      // resetQueries also doesn't work coz it would refetch right away
+      // so there's this moment where the user details part is blank
+      // removeQueries also gives this momentary blank flash
+      // but putting it after navigate seems to work fine
+      queryClient.removeQueries({ queryKey: ['session'] })
       await router.invalidate()
-      router.navigate({ to: '/login' })
     },
   })
 

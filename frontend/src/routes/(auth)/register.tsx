@@ -1,151 +1,156 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import type { FormEvent } from 'react'
+import { useForm } from '@mantine/form'
+import { notifications } from '@mantine/notifications'
+import {
+  Anchor,
+  Button,
+  Center,
+  Container,
+  Paper,
+  PasswordInput,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core'
+import { z } from 'zod'
+import { zod4Resolver } from 'mantine-form-zod-resolver'
 import { authApi } from '@/lib/auth.ts'
 
 export const Route = createFileRoute('/(auth)/register')({
   component: Register,
 })
 
+const registerSchema = z
+  .object({
+    name: z.string().trim().min(1, { message: 'Name is required' }),
+
+    username: z
+      .string()
+      .trim()
+      .min(3, { error: 'Username must be at least 3 characters' })
+      .max(50, { error: 'Username cannot exceed 50 characters' })
+      .regex(/^[a-zA-Z0-9_]+$/, {
+        error: 'Username can only contain letters, numbers, and underscores',
+      }),
+
+    email: z.email({ error: 'Invalid email address' }),
+
+    password: z
+      .string()
+      .min(8, { error: 'Password must be at least 8 characters' }),
+
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    error: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
 function Register() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+
+  const form = useForm({
+    mode: 'uncontrolled',
+    initialValues: {
+      username: '',
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+
+    validate: zod4Resolver(registerSchema),
+  })
+
   const registerMutation = useMutation({
     mutationFn: authApi.register,
-    onSuccess: () => {
-      navigate({ to: '/' })
+    onSuccess: async () => {
+      notifications.show({
+        title: 'Account created!',
+        message: 'You can now enjoy your new account.',
+        color: 'green',
+      })
+      await navigate({ to: '/home' })
     },
     onError: (err) => {
-      alert(err)
+      notifications.show({
+        title: 'Registration failed',
+        message: err.message || 'Could not create new account',
+        color: 'red',
+      })
     },
   })
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    registerMutation.mutate({ username, email, password, name })
+  const handleSubmit = (values: typeof form.values) => {
+    const { confirmPassword, ...registerData } = values
+    registerMutation.mutate(registerData)
   }
 
   return (
-    <div>
-      <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label
-            style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}
-          >
-            Username
-          </label>
-          <input
-            type="text"
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-            }}
-          />
-        </div>
+    <Center h="100vh">
+      <Container size={420} w="100%">
+        <Title ta="center">Create an account</Title>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label
-            style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}
-          >
-            Email
-          </label>
-          <input
-            type="email"
-            placeholder="Enter email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-            }}
-          />
-        </div>
+        <Text c="dimmed" size="sm" ta="center" mt={5}>
+          Already done this?{' '}
+          <Anchor component={Link} to="/login" size="sm">
+            Login
+          </Anchor>
+        </Text>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label
-            style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}
-          >
-            Name
-          </label>
-          <input
-            type="text"
-            placeholder="Enter your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-            }}
-          />
-        </div>
+        <Paper withBorder shadow="sm" p={30} mt={30} radius="md">
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack>
+              <TextInput
+                label="Name"
+                placeholder="Your full name"
+                required
+                {...form.getInputProps('name')}
+              />
 
-        <div style={{ marginBottom: '15px' }}>
-          <label
-            style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}
-          >
-            Password
-          </label>
-          <input
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-            }}
-          />
-        </div>
+              <TextInput
+                label="Username"
+                placeholder="Unique username"
+                description="Letters, numbers & underscores only"
+                required
+                {...form.getInputProps('username')}
+              />
 
-        <button
-          type="submit"
-          disabled={registerMutation.isPending}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: registerMutation.isPending ? '#ccc' : '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            fontWeight: '500',
-            cursor: registerMutation.isPending ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {registerMutation.isPending ? 'Registering...' : 'Register'}
-        </button>
-      </form>
+              <TextInput
+                label="Email"
+                placeholder="hello@example.com"
+                required
+                {...form.getInputProps('email')}
+              />
 
-      <p style={{ marginTop: '20px', textAlign: 'center', color: '#666' }}>
-        Already have an account?{' '}
-        <Link to="/login" style={{ color: '#007bff', textDecoration: 'none' }}>
-          Login
-        </Link>
-      </p>
-    </div>
+              <PasswordInput
+                label="Password"
+                placeholder="Min 8 characters"
+                required
+                {...form.getInputProps('password')}
+              />
+
+              <PasswordInput
+                label="Confirm Password"
+                placeholder="Re-enter password"
+                required
+                {...form.getInputProps('confirmPassword')}
+              />
+
+              <Button
+                fullWidth
+                mt="xl"
+                type="submit"
+                loading={registerMutation.isPending}
+              >
+                Register
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
+      </Container>
+    </Center>
   )
 }
