@@ -8,6 +8,7 @@ import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.UserRepository;
 import com.bloom.backend.security.AuthUserDetails;
 import com.bloom.backend.security.JwtUtils;
+import com.bloom.backend.security.TokenPair;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;

@@ -1,5 +1,6 @@
 package com.bloom.backend.services;
 
+import com.bloom.backend.dto.UserProfile;
 import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.UserRepository;
 import org.springframework.stereotype.Service;
@@ -31,5 +32,18 @@ public class UserService {
         } catch (IOException e) {
             throw new RuntimeException("couldn't to upload image to S3", e);
         }
+    }
+
+    public UserProfile getProfile(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("user not found"));
+
+        return new UserProfile(
+                user.getUsername(),
+                user.getEmail(),
+                user.getName(),
+                user.getBio(),
+                s3Service.createPresignedUrl(user.getPfp())
+        );
     }
 }

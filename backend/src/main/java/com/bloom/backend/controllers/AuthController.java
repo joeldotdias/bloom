@@ -3,7 +3,7 @@ package com.bloom.backend.controllers;
 import com.bloom.backend.dto.LoginRequest;
 import com.bloom.backend.dto.RegisterRequest;
 import com.bloom.backend.services.AuthService;
-import com.bloom.backend.services.TokenPair;
+import com.bloom.backend.security.TokenPair;
 import com.bloom.backend.utils.CookieUtils;
 import com.bloom.backend.utils.RequestUtils;
 import jakarta.servlet.http.HttpServletRequest;
