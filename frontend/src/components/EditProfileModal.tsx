@@ -23,11 +23,14 @@ export function EditProfileModal({
     initialValues: {
       name: user.name || '',
       bio: user.bio || '',
+      location: user.location || '',
     },
     validate: {
       name: (val) => (val.length < 1 ? 'Name cannot be empty' : null),
       bio: (val) =>
         val.length > 160 ? 'Bio cannot exceed 160 characters' : null,
+      location: (val) =>
+        val.length > 100 ? 'Location cannot exceed 100 characters' : null,
     },
   })
 
@@ -37,6 +40,7 @@ export function EditProfileModal({
       form.setValues({
         name: user.name || '',
         bio: user.bio || '',
+        location: user.location || '',
       })
     }
   }, [user, opened])
@@ -84,6 +88,12 @@ export function EditProfileModal({
             maxRows={5}
             maxLength={160}
             {...form.getInputProps('bio')}
+          />
+
+          <TextInput
+            label="Location"
+            placeholder="Where ya from"
+            {...form.getInputProps('location')}
           />
 
           <Group justify="flex-end" mt="md">

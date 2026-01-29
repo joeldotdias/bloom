@@ -18,6 +18,7 @@ export type UserProfile = {
   name: string
   bio: string | null
   pfp: string | null
+  location: string | null
   joinedAt: string
   isOwner: boolean
 }
@@ -25,6 +26,7 @@ export type UserProfile = {
 export type UpdateProfileData = {
   name: string
   bio: string
+  location: string
 }
 
 export const authApi = {

@@ -32,6 +32,7 @@ public class User {
 
     private String pfp;
     private String bio;
+    private String location;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

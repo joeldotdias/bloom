@@ -8,5 +8,8 @@ public record UpdateProfileRequest (
         String name,
 
         @Size(max = 160, message = "Bio cannot exceed 160 characters")
-        String bio
+        String bio,
+
+        @Size(max = 100)
+        String location
 ) { }

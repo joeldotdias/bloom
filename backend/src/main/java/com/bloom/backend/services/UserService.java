@@ -55,6 +55,7 @@ public class UserService {
 
         if (updateRequest.name() != null) user.setName(updateRequest.name());
         if (updateRequest.bio() != null) user.setBio(updateRequest.bio());
+        if (updateRequest.location() != null) user.setLocation(updateRequest.location());
 
         User updatedUser = userRepository.save(user);
 

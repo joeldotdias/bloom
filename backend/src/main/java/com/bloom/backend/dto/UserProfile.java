@@ -11,6 +11,7 @@ public record UserProfile(
     String name,
     String bio,
     String pfp,
+    String location,
     LocalDateTime joinedAt,
     boolean isOwner
 ) {
@@ -22,6 +23,7 @@ public record UserProfile(
                 user.getName(),
                 user.getBio(),
                 presignedPfpUrl,
+                user.getLocation(),
                 user.getCreatedAt(),
                 isOwner
         );

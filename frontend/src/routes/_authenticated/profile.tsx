@@ -11,7 +11,7 @@ import {
   Stack,
   Text,
 } from '@mantine/core'
-import { Calendar, Settings } from 'lucide-react'
+import { Calendar, MapPin, Settings } from 'lucide-react'
 import { authApi } from '@/lib/auth.ts'
 import { EditProfileModal } from '@/components/EditProfileModal.tsx'
 
@@ -85,9 +85,19 @@ function Profile() {
           </Text>
         )}
 
-        <Group mt="md" c="dimmed" gap={4}>
-          <Calendar size={16} />
-          <Text size="sm">Joined {new Date(user.joinedAt).getFullYear()}</Text>
+        <Group mt="md" gap="lg" c="dimmed">
+          {user.location && (
+            <Group gap={4}>
+              <MapPin size={16} />
+              <Text size="sm">{user.location}</Text>
+            </Group>
+          )}
+          <Group gap={4}>
+            <Calendar size={16} />
+            <Text size="sm">
+              Joined {new Date(user.joinedAt).getFullYear()}
+            </Text>
+          </Group>
         </Group>
 
         {/* STATS */}
