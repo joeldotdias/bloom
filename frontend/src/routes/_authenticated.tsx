@@ -1,5 +1,31 @@
-import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  Outlet,
+  createFileRoute,
+  redirect,
+  useRouter,
+} from '@tanstack/react-router'
+import { useDisclosure } from '@mantine/hooks'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  AppShell,
+  Avatar,
+  Burger,
+  Group,
+  Menu,
+  Text,
+  Title,
+  UnstyledButton,
+} from '@mantine/core'
+import {
+  Home,
+  LogOut,
+  MoreVertical,
+  PlusCircle,
+  Settings,
+  User,
+} from 'lucide-react'
 import { authApi } from '@/lib/auth.ts'
+import { NavButton } from '@/components/NavButton.tsx'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context, location }) => {
@@ -21,5 +47,109 @@ export const Route = createFileRoute('/_authenticated')({
 
     return { user }
   },
-  component: Outlet,
+  component: AppLayout,
 })
+
+function AppLayout() {
+  const { user } = Route.useRouteContext()
+  const [opened, { toggle }] = useDisclosure()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+
+  const logoutMutation = useMutation({
+    mutationFn: authApi.logout,
+    onSuccess: async () => {
+      await router.navigate({ to: '/login' })
+      // reminder for my own sanity since this took way too long to figure out
+      // setQueryData ['session'] to null doesn't work
+      // coz re logging in would just get null from the cache instead of refetching
+      // resetQueries also doesn't work coz it would refetch right away
+      // so there's this moment where the user details part is blank
+      // removeQueries also gives this momentary blank flash
+      // but putting it after navigate seems to work fine
+      queryClient.removeQueries({ queryKey: ['session'] })
+      await router.invalidate()
+    },
+  })
+
+  return (
+    <AppShell
+      header={{ height: 60, collapsed: true, offset: false }}
+      navbar={{
+        width: 300,
+        breakpoint: 'sm',
+        collapsed: { mobile: !opened, desktop: false },
+      }}
+      padding="md"
+    >
+      <AppShell.Header hiddenFrom="sm">
+        <Group h="100%" px="md">
+          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+          <Title order={4}>Bloom</Title>
+        </Group>
+      </AppShell.Header>
+
+      <AppShell.Navbar p="md">
+        <Group mb="xl" px="sm" visibleFrom="sm">
+          <Title order={3}>Bloom</Title>
+        </Group>
+
+        <div style={{ flex: 1 }}>
+          <NavButton to="/" icon={<Home size={20} />} label="Home" />
+          <NavButton to="/profile" icon={<User size={20} />} label="Profile" />
+          <NavButton
+            to="/create"
+            icon={<PlusCircle size={20} />}
+            label="Create Post"
+            color="blue"
+          />
+        </div>
+
+        <Menu shadow="md" width={200} position="right-end">
+          <Menu.Target>
+            <UnstyledButton
+              w="100%"
+              p="sm"
+              style={(theme) => ({
+                borderRadius: theme.radius.sm,
+                color: theme.colors.dark[0],
+                '&:hover': { backgroundColor: theme.colors.dark[6] },
+              })}
+            >
+              <Group>
+                <Avatar src={user.pfp} alt={user.name} radius="xl" />
+                <div style={{ flex: 1 }}>
+                  <Text size="sm" fw={500}>
+                    {user.name}
+                  </Text>
+                  <Text c="dimmed" size="xs">
+                    @{user.username}
+                  </Text>
+                </div>
+                <MoreVertical size={16} color="gray" />
+              </Group>
+            </UnstyledButton>
+          </Menu.Target>
+
+          <Menu.Dropdown>
+            <Menu.Item leftSection={<Settings size={16} />}>Settings</Menu.Item>
+            <Menu.Divider />
+            <Menu.Item
+              color="red"
+              leftSection={<LogOut size={16} />}
+              onClick={() => logoutMutation.mutate()}
+            >
+              Logout
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      </AppShell.Navbar>
+
+      <AppShell.Main>
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <Outlet />
+        </div>
+      </AppShell.Main>
+    </AppShell>
+  )
+}

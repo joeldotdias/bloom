@@ -15,6 +15,9 @@ export type LoginData = {
 export type UserProfile = {
   username: string
   email: string
+  name: string
+  bio: string | null
+  pfp: string | null
 }
 
 export const authApi = {
