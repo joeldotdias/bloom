@@ -18,8 +18,8 @@ public record UserProfile(
         return new UserProfile(
                 user.getId(),
                 user.getUsername(),
-                user.getName(),
                 isOwner ? user.getEmail() : null,
+                user.getName(),
                 user.getBio(),
                 presignedPfpUrl,
                 user.getCreatedAt(),
