@@ -29,7 +29,7 @@ public class UserService {
             user.setPfp(s3Key);
             userRepository.save(user);
 
-            return s3Service.createPresignedUrl(s3Key);
+            return s3Service.createPresignedViewUrl(s3Key);
         } catch (IOException e) {
             throw new RuntimeException("couldn't to upload image to S3", e);
         }
@@ -40,7 +40,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("user not found: " + username));
 
         boolean isOwner = user.getId().equals(currentUserId);
-        String pfpUrl = s3Service.createPresignedUrl(user.getPfp());
+        String pfpUrl = s3Service.createPresignedViewUrl(user.getPfp());
 
         return UserProfile.fromEntity(
                 user,
