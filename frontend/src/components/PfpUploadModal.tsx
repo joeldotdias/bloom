@@ -4,7 +4,7 @@ import { notifications } from '@mantine/notifications'
 import { Button, Group, Modal, Slider, Stack, Text } from '@mantine/core'
 import Cropper from 'react-easy-crop'
 import { getCroppedImage } from '@/lib/cropImage.ts'
-import { authApi } from '@/lib/auth.ts'
+import { userApi } from '@/lib/api/user.ts'
 
 type PfpUploadModalProps = {
   imageSrc: string | null
@@ -28,7 +28,7 @@ export function AvatarUploadModal({
   }, [])
 
   const pfpUploadMutation = useMutation({
-    mutationFn: authApi.uploadPfp,
+    mutationFn: userApi.uploadPfp,
     onSuccess: async () => {
       notifications.show({
         title: 'Success',

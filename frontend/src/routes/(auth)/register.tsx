@@ -16,7 +16,7 @@ import {
 } from '@mantine/core'
 import { z } from 'zod'
 import { zod4Resolver } from 'mantine-form-zod-resolver'
-import { authApi } from '@/lib/auth.ts'
+import { authApi } from '@/lib/api/auth.ts'
 
 export const Route = createFileRoute('/(auth)/register')({
   component: Register,

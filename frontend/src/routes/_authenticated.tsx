@@ -24,7 +24,8 @@ import {
   Settings,
   User,
 } from 'lucide-react'
-import { authApi } from '@/lib/auth.ts'
+import { authApi } from '@/lib/api/auth.ts'
+import { userApi } from '@/lib/api/user.ts'
 import { NavButton } from '@/components/NavButton.tsx'
 
 export const Route = createFileRoute('/_authenticated')({
@@ -33,7 +34,7 @@ export const Route = createFileRoute('/_authenticated')({
     try {
       user = await context.queryClient.ensureQueryData({
         queryKey: ['session'],
-        queryFn: authApi.getMe,
+        queryFn: userApi.getMe,
         staleTime: 5 * 60 * 1000,
       })
     } catch (err) {

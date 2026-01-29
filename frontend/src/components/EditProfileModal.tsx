@@ -3,8 +3,8 @@ import { useForm } from '@mantine/form'
 import { useEffect } from 'react'
 import { notifications } from '@mantine/notifications'
 import { Button, Group, Modal, Stack, TextInput, Textarea } from '@mantine/core'
-import type { UserProfile } from '@/lib/auth.ts'
-import { authApi } from '@/lib/auth.ts'
+import type { UserProfile } from '@/lib/api/user.ts'
+import { userApi } from '@/lib/api/user.ts'
 
 type EditProfileModalProps = {
   opened: boolean
@@ -46,7 +46,7 @@ export function EditProfileModal({
   }, [user, opened])
 
   const updateProfileMutation = useMutation({
-    mutationFn: authApi.updateProfile,
+    mutationFn: userApi.updateProfile,
     onSuccess: async () => {
       notifications.show({
         title: 'Success',

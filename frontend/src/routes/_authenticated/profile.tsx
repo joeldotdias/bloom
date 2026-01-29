@@ -14,7 +14,7 @@ import {
 import { Calendar, Camera, MapPin, Settings } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { authApi } from '@/lib/auth.ts'
+import { userApi } from '@/lib/api/user.ts'
 import { EditProfileModal } from '@/components/EditProfileModal.tsx'
 import { AvatarUploadModal } from '@/components/PfpUploadModal.tsx'
 
@@ -25,7 +25,7 @@ export const Route = createFileRoute('/_authenticated/profile')({
 function Profile() {
   const { data: user, isLoading } = useQuery({
     queryKey: ['me'],
-    queryFn: authApi.getMe,
+    queryFn: userApi.getMe,
   })
 
   const [opened, { open, close }] = useDisclosure(false)

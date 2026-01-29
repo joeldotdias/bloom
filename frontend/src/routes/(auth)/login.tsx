@@ -18,7 +18,7 @@ import {
   Title,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import { authApi } from '@/lib/auth.ts'
+import { authApi } from '@/lib/api/auth.ts'
 
 type LoginSearch = {
   redirect?: string
