@@ -12,6 +12,7 @@ import {
   Burger,
   Group,
   Menu,
+  NavLink,
   Text,
   Title,
   UnstyledButton,
@@ -24,9 +25,12 @@ import {
   Settings,
   User,
 } from 'lucide-react'
+import { useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import { authApi } from '@/lib/api/auth.ts'
 import { userApi } from '@/lib/api/user.ts'
 import { NavButton } from '@/components/NavButton.tsx'
+import { CreatePostModal } from '@/components/CreatePostModal.tsx'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context, location }) => {
@@ -57,6 +61,18 @@ function AppLayout() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setSelectedImage(URL.createObjectURL(file))
+      setCreateModalOpen(true)
+    }
+  }
+
   const logoutMutation = useMutation({
     mutationFn: authApi.logout,
     onSuccess: async () => {
@@ -74,83 +90,122 @@ function AppLayout() {
   })
 
   return (
-    <AppShell
-      header={{ height: 60, collapsed: true, offset: false }}
-      navbar={{
-        width: 300,
-        breakpoint: 'sm',
-        collapsed: { mobile: !opened, desktop: false },
-      }}
-      padding="md"
-    >
-      <AppShell.Header hiddenFrom="sm">
-        <Group h="100%" px="md">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <Title order={4}>Bloom</Title>
-        </Group>
-      </AppShell.Header>
+    <>
+      <input
+        type="file"
+        hidden
+        ref={fileInputRef}
+        accept="image/png, image/jpeg"
+        onChange={handleFileSelect}
+      />
 
-      <AppShell.Navbar p="md">
-        <Group mb="xl" px="sm" visibleFrom="sm">
-          <Title order={3}>Bloom</Title>
-        </Group>
+      <AppShell
+        header={{ height: 60, collapsed: true, offset: false }}
+        navbar={{
+          width: 300,
+          breakpoint: 'sm',
+          collapsed: { mobile: !opened, desktop: false },
+        }}
+        padding="md"
+      >
+        <AppShell.Header hiddenFrom="sm">
+          <Group h="100%" px="md">
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="sm"
+            />
+            <Title order={4}>Bloom</Title>
+          </Group>
+        </AppShell.Header>
 
-        <div style={{ flex: 1 }}>
-          <NavButton to="/" icon={<Home size={20} />} label="Home" />
-          <NavButton to="/profile" icon={<User size={20} />} label="Profile" />
-          <NavButton
-            to="/create"
-            icon={<PlusCircle size={20} />}
-            label="Create Post"
-            color="blue"
-          />
-        </div>
+        <AppShell.Navbar p="md">
+          <Group mb="xl" px="sm" visibleFrom="sm">
+            <Title order={3}>Bloom</Title>
+          </Group>
 
-        <Menu shadow="md" width={200} position="right-end">
-          <Menu.Target>
-            <UnstyledButton
-              w="100%"
-              p="sm"
-              style={(theme) => ({
-                borderRadius: theme.radius.sm,
-                color: theme.colors.dark[0],
-                '&:hover': { backgroundColor: theme.colors.dark[6] },
-              })}
-            >
-              <Group>
-                <Avatar src={user.pfp} alt={user.name} radius="xl" />
-                <div style={{ flex: 1 }}>
-                  <Text size="sm" fw={500}>
-                    {user.name}
-                  </Text>
-                  <Text c="dimmed" size="xs">
-                    @{user.username}
-                  </Text>
-                </div>
-                <MoreVertical size={16} color="gray" />
-              </Group>
-            </UnstyledButton>
-          </Menu.Target>
+          <div style={{ flex: 1 }}>
+            <NavButton to="/" icon={<Home size={20} />} label="Home" />
+            <NavButton
+              to="/profile"
+              icon={<User size={20} />}
+              label="Profile"
+            />
 
-          <Menu.Dropdown>
-            <Menu.Item leftSection={<Settings size={16} />}>Settings</Menu.Item>
-            <Menu.Divider />
-            <Menu.Item
-              color="red"
-              leftSection={<LogOut size={16} />}
-              onClick={() => logoutMutation.mutate()}
-            >
-              Logout
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
-      </AppShell.Navbar>
+            <NavLink
+              label="Create Post"
+              leftSection={<PlusCircle size={20} />}
+              active={false}
+              onClick={() => fileInputRef.current?.click()}
+              color="blue"
+              variant="light"
+              style={{ borderRadius: 'var(--mantine-radius-sm)', marginTop: 4 }}
+            />
+          </div>
 
-      <AppShell.Main>
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          <Outlet />
-        </div>
-      </AppShell.Main>
-    </AppShell>
+          <Menu shadow="md" width={200} position="right-end">
+            <Menu.Target>
+              <UnstyledButton
+                w="100%"
+                p="sm"
+                style={(theme) => ({
+                  borderRadius: theme.radius.sm,
+                  color: theme.colors.dark[0],
+                  '&:hover': { backgroundColor: theme.colors.dark[6] },
+                })}
+              >
+                <Group>
+                  <Avatar src={user.pfp} alt={user.name} radius="xl" />
+                  <div style={{ flex: 1 }}>
+                    <Text size="sm" fw={500}>
+                      {user.name}
+                    </Text>
+                    <Text c="dimmed" size="xs">
+                      @{user.username}
+                    </Text>
+                  </div>
+                  <MoreVertical size={16} color="gray" />
+                </Group>
+              </UnstyledButton>
+            </Menu.Target>
+
+            <Menu.Dropdown>
+              <Menu.Item leftSection={<Settings size={16} />}>
+                Settings
+              </Menu.Item>
+              <Menu.Divider />
+              <Menu.Item
+                color="red"
+                leftSection={<LogOut size={16} />}
+                onClick={() => logoutMutation.mutate()}
+              >
+                Logout
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </AppShell.Navbar>
+
+        <AppShell.Main>
+          <div style={{ maxWidth: 800, margin: '0 auto' }}>
+            <Outlet />
+          </div>
+        </AppShell.Main>
+      </AppShell>
+
+      {selectedImage && (
+        <CreatePostModal
+          imageSrc={selectedImage}
+          opened={createModalOpen}
+          onClose={() => {
+            setCreateModalOpen(false)
+            setSelectedImage(null)
+            if (fileInputRef.current) {
+              fileInputRef.current.value = ''
+            }
+          }}
+        />
+      )}
+    </>
   )
 }
