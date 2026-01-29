@@ -11,9 +11,12 @@ import {
   Stack,
   Text,
 } from '@mantine/core'
-import { Calendar, MapPin, Settings } from 'lucide-react'
+import { Calendar, Camera, MapPin, Settings } from 'lucide-react'
+import { useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import { authApi } from '@/lib/auth.ts'
 import { EditProfileModal } from '@/components/EditProfileModal.tsx'
+import { AvatarUploadModal } from '@/components/PfpUploadModal.tsx'
 
 export const Route = createFileRoute('/_authenticated/profile')({
   component: Profile,
@@ -27,6 +30,25 @@ function Profile() {
 
   const [opened, { open, close }] = useDisclosure(false)
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
+
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0]
+      const imageUrl = URL.createObjectURL(file)
+      setSelectedImage(imageUrl)
+      setUploadModalOpen(true)
+    }
+  }
+
+  const onAvatarClick = () => {
+    if (user?.isOwner) {
+      fileInputRef.current?.click()
+    }
+  }
+
   if (isLoading) return <ProfileSkeleton />
 
   if (!user) {
@@ -39,6 +61,14 @@ function Profile() {
 
   return (
     <Container size="md" p={0} mb="xl">
+      <input
+        type="file"
+        hidden
+        ref={fileInputRef}
+        accept="image/png, image/jpeg"
+        onChange={handleFileSelect}
+      />
+
       <Box h={180} bg="blue.5" style={{ borderRadius: '0 0 16px 16px' }} />
 
       <div style={{ padding: '0 24px' }}>
@@ -54,8 +84,28 @@ function Profile() {
               radius="50%"
               style={{
                 border: '4px solid var(--mantine-color-body)',
+                cursor: user.isOwner ? 'pointer' : 'default',
               }}
+              onClick={onAvatarClick}
             />
+
+            {/* tiny camera overlay to show owner can change pfp */}
+            {user.isOwner && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 5,
+                  right: 5,
+                  background: 'var(--mantine-color-default)',
+                  borderRadius: '50%',
+                  padding: 6,
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                  pointerEvents: 'none',
+                }}
+              >
+                <Camera size={14} />
+              </div>
+            )}
           </div>
 
           {user.isOwner && (
@@ -120,6 +170,12 @@ function Profile() {
           </Text>
         </Group>
       </div>
+
+      <AvatarUploadModal
+        imageSrc={selectedImage}
+        opened={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+      />
 
       <EditProfileModal opened={opened} onClose={close} user={user} />
     </Container>

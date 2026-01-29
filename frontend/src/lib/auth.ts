@@ -54,4 +54,14 @@ export const authApi = {
     const response = await api.put('/users/profile', data)
     return response.data
   },
+
+  uploadPfp: async (blob: Blob) => {
+    const formData = new FormData()
+    formData.append('image', blob)
+
+    const res = await api.post('/users/me/pfp', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return res.data
+  },
 }
