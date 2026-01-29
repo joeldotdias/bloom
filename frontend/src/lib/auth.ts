@@ -18,6 +18,13 @@ export type UserProfile = {
   name: string
   bio: string | null
   pfp: string | null
+  joinedAt: string
+  isOwner: boolean
+}
+
+export type UpdateProfileData = {
+  name: string
+  bio: string
 }
 
 export const authApi = {
@@ -38,6 +45,11 @@ export const authApi = {
 
   getMe: async (): Promise<UserProfile> => {
     const response = await api.get('/users/me')
+    return response.data
+  },
+
+  updateProfile: async (data: UpdateProfileData) => {
+    const response = await api.put('/users/profile', data)
     return response.data
   },
 }
