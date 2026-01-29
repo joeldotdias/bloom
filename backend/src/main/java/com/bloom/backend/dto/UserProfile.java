@@ -1,14 +1,29 @@
 package com.bloom.backend.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.bloom.backend.models.User;
 
-@Data
-@AllArgsConstructor
-public class UserProfile {
-    private String username;
-    private String email;
-    private String name;
-    private String bio;
-    private String pfp;
+import java.time.LocalDateTime;
+
+public record UserProfile(
+    Long id,
+    String username,
+    String email,
+    String name,
+    String bio,
+    String pfp,
+    LocalDateTime joinedAt,
+    boolean isOwner
+) {
+    public static UserProfile fromEntity(User user, boolean isOwner, String presignedPfpUrl) {
+        return new UserProfile(
+                user.getId(),
+                user.getUsername(),
+                user.getName(),
+                isOwner ? user.getEmail() : null,
+                user.getBio(),
+                presignedPfpUrl,
+                user.getCreatedAt(),
+                isOwner
+        );
+    }
 }

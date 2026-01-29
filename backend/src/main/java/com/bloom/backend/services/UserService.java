@@ -1,5 +1,6 @@
 package com.bloom.backend.services;
 
+import com.bloom.backend.dto.UpdateProfileRequest;
 import com.bloom.backend.dto.UserProfile;
 import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.UserRepository;
@@ -34,16 +35,29 @@ public class UserService {
         }
     }
 
-    public UserProfile getProfile(Long id) {
-        User user = userRepository.findById(id)
+    public UserProfile getUserProfile(String username, Long currentUserId) {
+        User user = userRepository.findUserByUsername(username)
+                .orElseThrow(() -> new RuntimeException("user not found: " + username));
+
+        boolean isOwner = user.getId().equals(currentUserId);
+        String pfpUrl = s3Service.createPresignedUrl(user.getPfp());
+
+        return UserProfile.fromEntity(
+                user,
+                isOwner,
+                pfpUrl
+        );
+    }
+
+    public UserProfile updateProfileDetails(Long userId, UpdateProfileRequest updateRequest) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("user not found"));
 
-        return new UserProfile(
-                user.getUsername(),
-                user.getEmail(),
-                user.getName(),
-                user.getBio(),
-                s3Service.createPresignedUrl(user.getPfp())
-        );
+        if (updateRequest.name() != null) user.setName(updateRequest.name());
+        if (updateRequest.bio() != null) user.setBio(updateRequest.bio());
+
+        User updatedUser = userRepository.save(user);
+
+        return getUserProfile(updatedUser.getUsername(), userId);
     }
 }

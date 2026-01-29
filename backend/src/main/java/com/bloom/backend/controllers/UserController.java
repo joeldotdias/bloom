@@ -1,8 +1,10 @@
 package com.bloom.backend.controllers;
 
+import com.bloom.backend.dto.UpdateProfileRequest;
 import com.bloom.backend.dto.UserProfile;
 import com.bloom.backend.security.AuthUserDetails;
 import com.bloom.backend.services.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +25,7 @@ public class UserController {
     public ResponseEntity<UserProfile> getCurrentUser(
             @AuthenticationPrincipal AuthUserDetails userDetails
     ) {
-        UserProfile profile = userService.getProfile(userDetails.getId());
+        UserProfile profile = userService.getUserProfile(userDetails.getUsername(), userDetails.getId());
         return ResponseEntity.ok(profile);
     }
 
@@ -36,4 +38,20 @@ public class UserController {
         return ResponseEntity.ok(newPfpUrl);
     }
 
+    @GetMapping("/{username}")
+    public ResponseEntity<UserProfile> getUserProfile(
+            @PathVariable String username,
+            @AuthenticationPrincipal AuthUserDetails currenUser
+    ) {
+        Long viewerId = (currenUser != null) ? currenUser.getId() : null;
+        return ResponseEntity.ok(userService.getUserProfile(username, viewerId));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserProfile> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest updateProfileRequest,
+            @AuthenticationPrincipal AuthUserDetails userDetails
+    ) {
+        return ResponseEntity.ok(userService.updateProfileDetails(userDetails.getId(),  updateProfileRequest));
+    }
 }
