@@ -1,6 +1,5 @@
 package com.bloom.backend.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +22,6 @@ public class Post {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
-    @JsonIgnoreProperties({ "password", "email", "role", "bio", "location", "banned", "online", "createdAt", "updatedAt", "hibernateLazyInitializer", "handler" })
     private User author;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -39,9 +37,6 @@ public class Post {
     @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "tag")
     private List<String> tags = new ArrayList<>();
-
-    @Transient
-    private String viewUrl;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

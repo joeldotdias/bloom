@@ -1,6 +1,7 @@
 package com.bloom.backend.controllers;
 
 import com.bloom.backend.dto.CreatePostRequest;
+import com.bloom.backend.dto.PostDto;
 import com.bloom.backend.models.Post;
 import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.UserRepository;
@@ -43,7 +44,7 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Post>> getFeed() {
+    public ResponseEntity<List<PostDto>> getFeed() {
         return ResponseEntity.ok(postService.getFeed());
     }
 
