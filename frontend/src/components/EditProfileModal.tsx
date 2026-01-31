@@ -50,10 +50,11 @@ export function EditProfileModal({
     onSuccess: async () => {
       notifications.show({
         title: 'Success',
-        message: 'Profile updated',
+        message: 'Username updated',
         color: 'green',
       })
       await queryClient.invalidateQueries({ queryKey: ['me'] })
+      await queryClient.invalidateQueries({ queryKey: ['user', user.username] })
       onClose()
     },
     onError: () => {
@@ -66,7 +67,7 @@ export function EditProfileModal({
   })
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Edit Profile" centered>
+    <Modal opened={opened} onClose={onClose} title="Edit Username" centered>
       <form
         onSubmit={form.onSubmit((values) =>
           updateProfileMutation.mutate(values),

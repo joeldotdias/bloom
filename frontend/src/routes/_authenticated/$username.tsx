@@ -2,50 +2,47 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useDisclosure } from '@mantine/hooks'
 import {
+  ActionIcon,
   Avatar,
   Box,
   Button,
   Container,
+  CopyButton,
+  FileButton,
   Group,
   Skeleton,
   Stack,
   Text,
+  Tooltip,
 } from '@mantine/core'
-import { Calendar, Camera, MapPin, Settings } from 'lucide-react'
-import { useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
+import { Calendar, Camera, Check, MapPin, Settings, Share2 } from 'lucide-react'
+import { useState } from 'react'
 import { userApi } from '@/lib/api/user.ts'
 import { EditProfileModal } from '@/components/EditProfileModal.tsx'
 import { AvatarUploadModal } from '@/components/PfpUploadModal.tsx'
 
-export const Route = createFileRoute('/_authenticated/profile')({
-  component: Profile,
+export const Route = createFileRoute('/_authenticated/$username')({
+  component: UserProfile,
 })
 
-function Profile() {
+function UserProfile() {
+  const { username } = Route.useParams()
+
   const { data: user, isLoading } = useQuery({
-    queryKey: ['me'],
-    queryFn: userApi.getMe,
+    queryKey: ['user', username],
+    queryFn: () => userApi.getUser(username),
+    retry: false,
   })
 
-  const [opened, { open, close }] = useDisclosure(false)
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [editModalOpen, { open: openEdit, close: closeEdit }] =
+    useDisclosure(false)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
-  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0]
-      const imageUrl = URL.createObjectURL(file)
-      setSelectedImage(imageUrl)
+  const handleFileSelect = (file: File | null) => {
+    if (file) {
+      setSelectedImage(URL.createObjectURL(file))
       setUploadModalOpen(true)
-    }
-  }
-
-  const onAvatarClick = () => {
-    if (user?.isOwner) {
-      fileInputRef.current?.click()
     }
   }
 
@@ -54,21 +51,13 @@ function Profile() {
   if (!user) {
     return (
       <Text c="red" ta="center" mt="xl">
-        Could not loading profile
+        Could not load profile
       </Text>
     )
   }
 
   return (
     <Container size="md" p={0} mb="xl">
-      <input
-        type="file"
-        hidden
-        ref={fileInputRef}
-        accept="image/png, image/jpeg"
-        onChange={handleFileSelect}
-      />
-
       <Box h={180} bg="blue.5" style={{ borderRadius: '0 0 16px 16px' }} />
 
       <div style={{ padding: '0 24px' }}>
@@ -84,42 +73,71 @@ function Profile() {
               radius="50%"
               style={{
                 border: '4px solid var(--mantine-color-body)',
-                cursor: user.isOwner ? 'pointer' : 'default',
               }}
-              onClick={onAvatarClick}
             />
 
             {/* tiny camera overlay to show owner can change pfp */}
             {user.isOwner && (
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 5,
-                  right: 5,
-                  background: 'var(--mantine-color-default)',
-                  borderRadius: '50%',
-                  padding: 6,
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                  pointerEvents: 'none',
-                }}
+              <FileButton
+                onChange={handleFileSelect}
+                accept="iamge/png,image/jpeg"
               >
-                <Camera size={14} />
-              </div>
+                {(props) => (
+                  <ActionIcon
+                    {...props}
+                    variant="filled"
+                    color="gray"
+                    radius="xl"
+                    size="lg"
+                    style={{
+                      position: 'absolute',
+                      bottom: 5,
+                      right: 5,
+                      background: '2px solid var(--mantine-color-body)',
+                    }}
+                  >
+                    <Camera size={16} />
+                  </ActionIcon>
+                )}
+              </FileButton>
             )}
           </div>
 
-          {user.isOwner && (
-            <Button
-              radius="xl"
-              variant="default"
-              leftSection={<Settings size={16} />}
-              onClick={open}
-            >
-              Edit Profile
-            </Button>
-          )}
+          {/* ACTIONS */}
+          <Group gap="sm">
+            {user.isOwner ? (
+              <Button
+                radius="xl"
+                variant="default"
+                leftSection={<Settings size={16} />}
+                onClick={openEdit}
+              >
+                Edit Profile
+              </Button>
+            ) : (
+              <Button radius="xl" color="blue">
+                Follow
+              </Button>
+            )}
+
+            <CopyButton value={window.location.href} timeout={2000}>
+              {({ copied, copy }) => (
+                <Tooltip label={copied ? 'Copied' : 'Share Profile'} withArrow>
+                  <ActionIcon
+                    variant="default"
+                    radius="xl"
+                    size={36}
+                    onClick={copy}
+                  >
+                    {copied ? <Check size={16} /> : <Share2 size={16} />}
+                  </ActionIcon>
+                </Tooltip>
+              )}
+            </CopyButton>
+          </Group>
         </Group>
 
+        {/* USER INFO */}
         <Stack gap={4}>
           <Text fw={800} size="xl" lh={1}>
             {user.name}
@@ -169,15 +187,25 @@ function Profile() {
             </Text>
           </Text>
         </Group>
+
+        {/* will add tabs for Posts, Likes etc. here */}
       </div>
 
-      <AvatarUploadModal
-        imageSrc={selectedImage}
-        opened={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
-      />
+      {user.isOwner && (
+        <>
+          <AvatarUploadModal
+            imageSrc={selectedImage}
+            opened={uploadModalOpen}
+            onClose={() => setUploadModalOpen(false)}
+          />
 
-      <EditProfileModal opened={opened} onClose={close} user={user} />
+          <EditProfileModal
+            opened={editModalOpen}
+            onClose={closeEdit}
+            user={user}
+          />
+        </>
+      )}
     </Container>
   )
 }

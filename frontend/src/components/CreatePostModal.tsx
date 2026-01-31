@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getCroppedImage } from '@/lib/cropImage.ts'
-import { postApi } from '@/lib/api/post.ts'
 import { notifications } from '@mantine/notifications'
 import { Button, Group, Modal, TagsInput, Textarea } from '@mantine/core'
 import Cropper from 'react-easy-crop'
+import { postApi } from '@/lib/api/post.ts'
+import { getCroppedImage } from '@/lib/cropImage.ts'
 
 type CreatePostModalProps = {
   imageSrc: string | null

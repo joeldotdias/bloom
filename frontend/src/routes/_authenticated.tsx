@@ -10,6 +10,7 @@ import {
   AppShell,
   Avatar,
   Burger,
+  FileButton,
   Group,
   Menu,
   NavLink,
@@ -26,7 +27,6 @@ import {
   User,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
 import { authApi } from '@/lib/api/auth.ts'
 import { userApi } from '@/lib/api/user.ts'
 import { NavButton } from '@/components/NavButton.tsx'
@@ -65,8 +65,7 @@ function AppLayout() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const handleFileSelect = (file: File | null) => {
     if (file) {
       setSelectedImage(URL.createObjectURL(file))
       setCreateModalOpen(true)
@@ -91,14 +90,6 @@ function AppLayout() {
 
   return (
     <>
-      <input
-        type="file"
-        hidden
-        ref={fileInputRef}
-        accept="image/png, image/jpeg"
-        onChange={handleFileSelect}
-      />
-
       <AppShell
         header={{ height: 60, collapsed: true, offset: false }}
         navbar={{
@@ -128,20 +119,25 @@ function AppLayout() {
           <div style={{ flex: 1 }}>
             <NavButton to="/" icon={<Home size={20} />} label="Home" />
             <NavButton
-              to="/profile"
+              to={`/${user.username}`}
               icon={<User size={20} />}
               label="Profile"
             />
 
-            <NavLink
-              label="Create Post"
-              leftSection={<PlusCircle size={20} />}
-              active={false}
-              onClick={() => fileInputRef.current?.click()}
-              color="blue"
-              variant="light"
-              style={{ borderRadius: 'var(--mantine-radius-sm)', marginTop: 4 }}
-            />
+            <FileButton
+              onChange={handleFileSelect}
+              accept="image/png,image/jpeg"
+            >
+              {(props) => (
+                <NavLink
+                  {...props}
+                  label="Create Post"
+                  leftSection={<PlusCircle size={20} />}
+                  color="blue"
+                  variant="light"
+                />
+              )}
+            </FileButton>
           </div>
 
           <Menu shadow="md" width={200} position="right-end">

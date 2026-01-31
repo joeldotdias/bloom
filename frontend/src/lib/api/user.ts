@@ -2,7 +2,7 @@ import { api } from '@/lib/api/index.ts'
 
 export type UserProfile = {
   username: string
-  email: string
+  email: string | null // null if not owner
   name: string
   bio: string | null
   pfp: string | null
@@ -19,8 +19,13 @@ export type UpdateProfileData = {
 
 export const userApi = {
   getMe: async (): Promise<UserProfile> => {
-    const response = await api.get('/users/me')
-    return response.data
+    const res = await api.get('/users/me')
+    return res.data
+  },
+
+  getUser: async (username: string): Promise<UserProfile> => {
+    const res = await api.get(`/users/${username}`)
+    return res.data
   },
 
   updateProfile: async (data: UpdateProfileData) => {
