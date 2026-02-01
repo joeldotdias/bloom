@@ -10,4 +10,7 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     List<Post> findAllByOrderByCreatedAtDesc();
+
+    // peak naming
+    List<Post> findByAuthorUsernameOrderByCreatedAtDesc(String username);
 }

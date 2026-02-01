@@ -3,23 +3,43 @@ import { useQuery } from '@tanstack/react-query'
 import { useDisclosure } from '@mantine/hooks'
 import {
   ActionIcon,
+  AspectRatio,
   Avatar,
   Box,
   Button,
+  Center,
   Container,
   CopyButton,
   FileButton,
   Group,
+  Image,
+  Modal,
+  Overlay,
+  SimpleGrid,
   Skeleton,
   Stack,
+  Tabs,
   Text,
   Tooltip,
 } from '@mantine/core'
-import { Calendar, Camera, Check, MapPin, Settings, Share2 } from 'lucide-react'
+import {
+  Calendar,
+  Camera,
+  Check,
+  Grid3X3,
+  Heart,
+  MapPin,
+  Repeat,
+  Settings,
+  Share2,
+} from 'lucide-react'
 import { useState } from 'react'
+import type { Post } from '@/lib/api/post.ts'
 import { userApi } from '@/lib/api/user.ts'
 import { EditProfileModal } from '@/components/EditProfileModal.tsx'
 import { AvatarUploadModal } from '@/components/PfpUploadModal.tsx'
+import { postApi } from '@/lib/api/post.ts'
+import { PostCard } from '@/components/PostCard.tsx'
 
 export const Route = createFileRoute('/_authenticated/$username')({
   component: UserProfile,
@@ -28,16 +48,24 @@ export const Route = createFileRoute('/_authenticated/$username')({
 function UserProfile() {
   const { username } = Route.useParams()
 
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['user', username],
     queryFn: () => userApi.getUser(username),
     retry: false,
+  })
+
+  const { data: posts, isLoading: isPostsLoading } = useQuery({
+    queryKey: ['posts', 'user', username],
+    queryFn: () => postApi.getPosts(username),
   })
 
   const [editModalOpen, { open: openEdit, close: closeEdit }] =
     useDisclosure(false)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null)
+  const [detailsOpen, { open: openDetails, close: closeDetails }] =
+    useDisclosure(false)
 
   const handleFileSelect = (file: File | null) => {
     if (file) {
@@ -46,7 +74,12 @@ function UserProfile() {
     }
   }
 
-  if (isLoading) return <ProfileSkeleton />
+  const handlePostSelect = (post: Post) => {
+    setSelectedPost(post)
+    openDetails()
+  }
+
+  if (isUserLoading) return <ProfileSkeleton />
 
   if (!user) {
     return (
@@ -188,8 +221,53 @@ function UserProfile() {
           </Text>
         </Group>
 
-        {/* will add tabs for Posts, Likes etc. here */}
+        <Tabs defaultValue="posts" mt="xl" color="gray" variant="pills">
+          <Tabs.List>
+            <Tabs.Tab value="posts" leftSection={<Grid3X3 size={14} />}>
+              Posts
+            </Tabs.Tab>
+            <Tabs.Tab value="reposts" leftSection={<Repeat size={14} />}>
+              Reposts
+            </Tabs.Tab>
+          </Tabs.List>
+
+          <Tabs.Panel value="posts" pt="lg">
+            {isPostsLoading ? (
+              <SimpleGrid cols={3} spacing="xs">
+                {Array(6)
+                  .fill(0)
+                  .map((_, i) => (
+                    <AspectRatio key={i} ratio={1}>
+                      <Skeleton h="100%" w="100%" />
+                    </AspectRatio>
+                  ))}
+              </SimpleGrid>
+            ) : (
+              <SimpleGrid cols={3} spacing="xs">
+                {posts?.map((post) => (
+                  <GridItem
+                    key={post.id}
+                    post={post}
+                    onClick={() => handlePostSelect(post)}
+                  />
+                ))}
+              </SimpleGrid>
+            )}
+          </Tabs.Panel>
+        </Tabs>
       </div>
+
+      <Modal
+        opened={detailsOpen}
+        onClose={closeDetails}
+        size="lg"
+        padding={0}
+        withCloseButton={false}
+        radius="md"
+        centered
+      >
+        {selectedPost && <PostCard post={selectedPost} />}
+      </Modal>
 
       {user.isOwner && (
         <>
@@ -207,6 +285,37 @@ function UserProfile() {
         </>
       )}
     </Container>
+  )
+}
+
+function GridItem({ post, onClick }: { post: Post; onClick: () => void }) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  return (
+    <Box
+      style={{ position: 'relative', cursor: 'pointer' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={onClick}
+    >
+      <AspectRatio ratio={1}>
+        <Image src={post.viewUrl} alt={post.caption} />
+      </AspectRatio>
+
+      {isHovered && (
+        <Overlay color="#000" opacity={0.4} zIndex={1}>
+          <Center h="100%">
+            <Group c="white" gap="lg">
+              <Group gap={4}>
+                <Heart size={20} fill="white" />
+                <Text fw={700}>0</Text>
+              </Group>
+              <Group gap={4}></Group>
+            </Group>
+          </Center>
+        </Overlay>
+      )}
+    </Box>
   )
 }
 

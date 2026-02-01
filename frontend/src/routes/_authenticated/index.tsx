@@ -15,7 +15,7 @@ function HomeFeed() {
     error,
   } = useQuery({
     queryKey: ['posts', 'feed'],
-    queryFn: postApi.getFeed,
+    queryFn: () => postApi.getPosts(),
   })
 
   if (error) {

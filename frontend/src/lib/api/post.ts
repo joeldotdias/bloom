@@ -47,8 +47,10 @@ export const postApi = {
     return res.data
   },
 
-  getFeed: async (): Promise<Array<Post>> => {
-    const res = await api.get(`/posts`)
+  getPosts: async (username?: string): Promise<Array<Post>> => {
+    const res = await api.get('/posts', {
+      params: { username },
+    })
     return res.data
   },
 }

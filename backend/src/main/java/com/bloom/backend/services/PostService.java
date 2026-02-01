@@ -33,24 +33,33 @@ public class PostService {
     }
 
     public List<PostDto> getFeed() {
-        List<Post> posts = postRepository.findAllByOrderByCreatedAtDesc();
+        return postRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(post -> PostDto.fromEntity(post, s3Service::createPresignedViewUrl))
+                .toList();
 
-        return posts.stream().map(post -> {
-            String presignedPostUrl = s3Service.createPresignedViewUrl(post.getImageUrl());
-            String presignedPfpUrl = s3Service.createPresignedViewUrl(post.getAuthor().getPfp());
+//        return posts.stream().map(post -> {
+//            String presignedPostUrl = s3Service.createPresignedViewUrl(post.getImageUrl());
+//            String presignedPfpUrl = s3Service.createPresignedViewUrl(post.getAuthor().getPfp());
+//
+//            return new PostDto(
+//                    post.getId(),
+//                    post.getCaption(),
+//                    presignedPostUrl,
+//                    post.getTags(),
+//                    post.getCreatedAt(),
+//                    new AuthorDto(
+//                            post.getAuthor().getUsername(),
+//                            post.getAuthor().getName(),
+//                            presignedPfpUrl
+//                    )
+//            );
+//        }).toList();
+    }
 
-            return new PostDto(
-                    post.getId(),
-                    post.getCaption(),
-                    presignedPostUrl,
-                    post.getTags(),
-                    post.getCreatedAt(),
-                    new AuthorDto(
-                            post.getAuthor().getUsername(),
-                            post.getAuthor().getName(),
-                            presignedPfpUrl
-                    )
-            );
-        }).collect(Collectors.toList());
+    public List<PostDto> getUserPosts(String username) {
+        return postRepository.findByAuthorUsernameOrderByCreatedAtDesc(username)
+                .stream()
+                .map(post -> PostDto.fromEntity(post, s3Service::createPresignedViewUrl))
+                .toList();
     }
 }

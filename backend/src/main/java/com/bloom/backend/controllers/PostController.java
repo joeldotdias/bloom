@@ -44,8 +44,14 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PostDto>> getFeed() {
-        return ResponseEntity.ok(postService.getFeed());
+    public ResponseEntity<List<PostDto>> getPosts(
+            @RequestParam(required = false) String username
+    ) {
+        if (username != null && !username.isBlank()) {
+            return ResponseEntity.ok(postService.getUserPosts(username));
+        } else {
+            return ResponseEntity.ok(postService.getFeed());
+        }
     }
 
     @GetMapping("/upload-url")
