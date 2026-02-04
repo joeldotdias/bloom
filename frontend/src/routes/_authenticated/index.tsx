@@ -3,12 +3,15 @@ import { useQuery } from '@tanstack/react-query'
 import { Center, Container, Grid, Skeleton, Stack, Text } from '@mantine/core'
 import { postApi } from '@/lib/api/post.ts'
 import { PostCard } from '@/components/PostCard.tsx'
+import { Route as AuthRoute } from '@/routes/_authenticated.tsx'
 
 export const Route = createFileRoute('/_authenticated/')({
   component: HomeFeed,
 })
 
 function HomeFeed() {
+  const { user } = AuthRoute.useRouteContext()
+
   const {
     data: posts,
     isLoading,
@@ -36,7 +39,13 @@ function HomeFeed() {
               ? Array(3)
                   .fill(0)
                   .map((_, i) => <Skeleton key={i} h={600} radius="md" />)
-              : posts?.map((post) => <PostCard key={post.id} post={post} />)}
+              : posts?.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    isOwner={user.username === post.author.username}
+                  />
+                ))}
           </Stack>
         </Grid.Col>
       </Grid>

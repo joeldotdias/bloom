@@ -7,16 +7,49 @@ import {
   Card,
   Group,
   Image,
+  Menu,
+  MenuDropdown,
   Spoiler,
   Text,
 } from '@mantine/core'
 import { Link } from '@tanstack/react-router'
-import { Heart, MessageCircle, MoreHorizontal, Share2 } from 'lucide-react'
+import {
+  Flag,
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Share2,
+  Trash,
+} from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { notifications } from '@mantine/notifications'
 import type { Post } from '@/lib/api/post.ts'
+import { postApi } from '@/lib/api/post.ts'
 import { formatTimeAgo } from '@/lib/date.ts'
 
-export function PostCard({ post }: { post: Post }) {
-  console.log(post.author.pfp)
+type PostCardProps = {
+  post: Post
+  isOwner?: boolean
+}
+
+export function PostCard({ post, isOwner = false }: PostCardProps) {
+  const queryClient = useQueryClient()
+
+  const deletePostMutation = useMutation({
+    mutationFn: postApi.deletePost,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['posts'] })
+      await queryClient.invalidateQueries({ queryKey: ['user-posts'] })
+    },
+    onError: () => {
+      notifications.show({
+        title: 'Error',
+        message: 'Could not delete post',
+        color: 'red',
+      })
+    },
+  })
+
   return (
     <Card withBorder padding="md" radius="md" mb="lg">
       {/* AUTHOR INFO */}
@@ -39,9 +72,29 @@ export function PostCard({ post }: { post: Post }) {
               </div>
             </Group>
           </Link>
-          <ActionIcon variant="subtle" color="gray">
-            <MoreHorizontal size={18} />
-          </ActionIcon>
+
+          <Menu withinPortal position="bottom-end" shadow="md">
+            <Menu.Target>
+              <ActionIcon variant="subtle" color="gray">
+                <MoreHorizontal size={18} />
+              </ActionIcon>
+            </Menu.Target>
+
+            <MenuDropdown>
+              {isOwner ? (
+                <Menu.Item
+                  leftSection={<Trash size={14} />}
+                  color="red"
+                  onClick={() => deletePostMutation.mutate(post.id)}
+                  disabled={deletePostMutation.isPending}
+                >
+                  Delete Post
+                </Menu.Item>
+              ) : (
+                <Menu.Item leftSection={<Flag size={14} />}>Report</Menu.Item>
+              )}
+            </MenuDropdown>
+          </Menu>
         </Group>
       </Card.Section>
 

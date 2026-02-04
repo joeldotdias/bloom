@@ -1,15 +1,14 @@
 package com.bloom.backend.services;
 
-import com.bloom.backend.dto.AuthorDto;
 import com.bloom.backend.dto.CreatePostRequest;
 import com.bloom.backend.dto.PostDto;
 import com.bloom.backend.models.Post;
 import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.PostRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -33,27 +32,10 @@ public class PostService {
     }
 
     public List<PostDto> getFeed() {
-        return postRepository.findAllByOrderByCreatedAtDesc().stream()
+        return postRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
                 .map(post -> PostDto.fromEntity(post, s3Service::createPresignedViewUrl))
                 .toList();
-
-//        return posts.stream().map(post -> {
-//            String presignedPostUrl = s3Service.createPresignedViewUrl(post.getImageUrl());
-//            String presignedPfpUrl = s3Service.createPresignedViewUrl(post.getAuthor().getPfp());
-//
-//            return new PostDto(
-//                    post.getId(),
-//                    post.getCaption(),
-//                    presignedPostUrl,
-//                    post.getTags(),
-//                    post.getCreatedAt(),
-//                    new AuthorDto(
-//                            post.getAuthor().getUsername(),
-//                            post.getAuthor().getName(),
-//                            presignedPfpUrl
-//                    )
-//            );
-//        }).toList();
     }
 
     public List<PostDto> getUserPosts(String username) {
@@ -61,5 +43,18 @@ public class PostService {
                 .stream()
                 .map(post -> PostDto.fromEntity(post, s3Service::createPresignedViewUrl))
                 .toList();
+    }
+
+    @Transactional
+    public void deletePost(Long postId, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("post not found: " + postId));
+
+        if (!post.getAuthor().getUsername().equals(username)) {
+            throw new RuntimeException("unauthorized");
+        }
+
+        s3Service.deleteFile(post.getImageUrl());
+        postRepository.delete(post);
     }
 }

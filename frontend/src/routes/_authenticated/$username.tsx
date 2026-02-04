@@ -266,7 +266,12 @@ function UserProfile() {
         radius="md"
         centered
       >
-        {selectedPost && <PostCard post={selectedPost} />}
+        {selectedPost && (
+          <PostCard
+            post={selectedPost}
+            isOwner={username === selectedPost.author.username}
+          />
+        )}
       </Modal>
 
       {user.isOwner && (

@@ -69,4 +69,13 @@ public class PostController {
                 "key", key
         ));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> getUploadUrl(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AuthUserDetails userDetails
+    ) {
+        postService.deletePost(id, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
 }

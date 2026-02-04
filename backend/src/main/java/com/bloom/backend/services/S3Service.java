@@ -75,4 +75,12 @@ public class S3Service {
         return s3Presigner.presignPutObject(presignRequest).url().toString();
     }
 
+    public void deleteFile(String fileUrl) {
+        if (fileUrl == null || fileUrl.isEmpty()) {
+            return;
+        }
+
+        String key = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+        s3Client.deleteObject(builder -> builder.bucket(bucketName).key(key));
+    }
 }
