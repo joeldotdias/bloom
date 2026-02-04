@@ -31,6 +31,7 @@ import { authApi } from '@/lib/api/auth.ts'
 import { userApi } from '@/lib/api/user.ts'
 import { NavButton } from '@/components/NavButton.tsx'
 import { CreatePostModal } from '@/components/CreatePostModal.tsx'
+import { UserSearch } from '@/components/UserSearch.tsx'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context, location }) => {
@@ -115,6 +116,10 @@ function AppLayout() {
           <Group mb="xl" px="sm" visibleFrom="sm">
             <Title order={3}>Bloom</Title>
           </Group>
+
+          <div style={{ marginBottom: 20 }}>
+            <UserSearch />
+          </div>
 
           <div style={{ flex: 1 }}>
             <NavButton to="/" icon={<Home size={20} />} label="Home" />

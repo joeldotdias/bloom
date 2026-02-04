@@ -17,6 +17,12 @@ export type UpdateProfileData = {
   location: string
 }
 
+export type UserSummary = {
+  username: string
+  name: string
+  pfp: string | null
+}
+
 export const userApi = {
   getMe: async (): Promise<UserProfile> => {
     const res = await api.get('/users/me')
@@ -40,6 +46,15 @@ export const userApi = {
     const res = await api.post('/users/me/pfp', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
+    return res.data
+  },
+
+  search: async (query: string): Promise<Array<UserSummary>> => {
+    if (!query) {
+      return []
+    }
+
+    const res = await api.get('/users/search', { params: { query } })
     return res.data
   },
 }

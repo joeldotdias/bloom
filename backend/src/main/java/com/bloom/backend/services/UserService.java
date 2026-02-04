@@ -2,12 +2,15 @@ package com.bloom.backend.services;
 
 import com.bloom.backend.dto.UpdateProfileRequest;
 import com.bloom.backend.dto.UserProfile;
+import com.bloom.backend.dto.UserSummary;
 import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -60,5 +63,12 @@ public class UserService {
         User updatedUser = userRepository.save(user);
 
         return getUserProfile(updatedUser.getUsername(), userId);
+    }
+
+    public List<UserSummary> searchUsers(String query) {
+        return userRepository.findByUsernameContainingIgnoreCase(query, PageRequest.of(0, 5))
+                .stream()
+                .map(user -> UserSummary.fromEntity(user, s3Service::createPresignedViewUrl))
+                .toList();
     }
 }

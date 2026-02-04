@@ -2,6 +2,7 @@ package com.bloom.backend.controllers;
 
 import com.bloom.backend.dto.UpdateProfileRequest;
 import com.bloom.backend.dto.UserProfile;
+import com.bloom.backend.dto.UserSummary;
 import com.bloom.backend.security.AuthUserDetails;
 import com.bloom.backend.services.UserService;
 import jakarta.validation.Valid;
@@ -10,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -53,5 +56,12 @@ public class UserController {
             @AuthenticationPrincipal AuthUserDetails userDetails
     ) {
         return ResponseEntity.ok(userService.updateProfileDetails(userDetails.getId(),  updateProfileRequest));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserSummary>> searchUsers(
+            @RequestParam String query
+    ) {
+        return ResponseEntity.ok(userService.searchUsers(query));
     }
 }
