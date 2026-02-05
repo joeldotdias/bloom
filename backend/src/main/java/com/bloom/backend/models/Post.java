@@ -38,6 +38,9 @@ public class Post {
     @Column(name = "tag")
     private List<String> tags = new ArrayList<>();
 
+    @Column(name = "like_count")
+    private Long likeCount = 0L;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
