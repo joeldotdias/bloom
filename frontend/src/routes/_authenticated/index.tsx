@@ -1,9 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Center, Container, Grid, Skeleton, Stack, Text } from '@mantine/core'
+import { useState } from 'react'
 import { postApi } from '@/lib/api/post.ts'
 import { PostCard } from '@/components/PostCard.tsx'
 import { Route as AuthRoute } from '@/routes/_authenticated.tsx'
+import { CommentDrawer } from '@/components/CommentDrawer.tsx'
 
 export const Route = createFileRoute('/_authenticated/')({
   component: HomeFeed,
@@ -20,6 +22,8 @@ function HomeFeed() {
     queryKey: ['posts', 'feed'],
     queryFn: () => postApi.getPosts(),
   })
+
+  const [activePostId, setActivePostId] = useState<number | null>(null)
 
   if (error) {
     return (
@@ -44,11 +48,17 @@ function HomeFeed() {
                     key={post.id}
                     post={post}
                     isOwner={user.username === post.author.username}
+                    onCommentClick={() => setActivePostId(post.id)}
                   />
                 ))}
           </Stack>
         </Grid.Col>
       </Grid>
+
+      <CommentDrawer
+        postId={activePostId}
+        onClose={() => setActivePostId(null)}
+      />
     </Container>
   )
 }

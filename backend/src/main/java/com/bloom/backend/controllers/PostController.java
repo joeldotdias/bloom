@@ -1,11 +1,14 @@
 package com.bloom.backend.controllers;
 
+import com.bloom.backend.dto.CommentDto;
+import com.bloom.backend.dto.CreateCommentRequest;
 import com.bloom.backend.dto.CreatePostRequest;
 import com.bloom.backend.dto.PostDto;
 import com.bloom.backend.models.Post;
 import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.UserRepository;
 import com.bloom.backend.security.AuthUserDetails;
+import com.bloom.backend.services.PostCommentService;
 import com.bloom.backend.services.PostService;
 import com.bloom.backend.services.S3Service;
 import org.springframework.http.HttpStatus;
@@ -24,11 +27,13 @@ public class PostController {
     private final PostService postService;
     private final S3Service s3Service;
     private final UserRepository userRepository;
+    private final PostCommentService commentService;
 
-    public PostController(PostService postService, S3Service s3Service, UserRepository userRepository) {
+    public PostController(PostService postService, S3Service s3Service, UserRepository userRepository, PostCommentService commentService) {
         this.postService = postService;
         this.s3Service = s3Service;
         this.userRepository = userRepository;
+        this.commentService = commentService;
     }
 
     @PostMapping
@@ -87,5 +92,23 @@ public class PostController {
     ) {
         postService.toggleLike(postId, currentUser.getUsername());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{postId}/comments")
+    public ResponseEntity<List<CommentDto>> getComments(@PathVariable Long postId) {
+        return ResponseEntity.ok(commentService.getComments(postId));
+    }
+
+    @PostMapping("/{postId}/comments")
+    public ResponseEntity<CommentDto> addComment(
+            @PathVariable Long postId,
+            @RequestBody CreateCommentRequest commentRequest,
+            @AuthenticationPrincipal AuthUserDetails currentUser
+    ) {
+        return ResponseEntity.ok(commentService.addComment(
+                postId,
+                currentUser.getUsername(),
+                commentRequest.content()
+        ));
     }
 }

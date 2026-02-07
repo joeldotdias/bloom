@@ -29,6 +29,7 @@ import {
   Grid3X3,
   Heart,
   MapPin,
+  MessageCircle,
   Repeat,
   Settings,
   Share2,
@@ -310,12 +311,15 @@ function GridItem({ post, onClick }: { post: Post; onClick: () => void }) {
       {isHovered && (
         <Overlay color="#000" opacity={0.4} zIndex={1}>
           <Center h="100%">
-            <Group c="white" gap="lg">
-              <Group gap={4}>
-                <Heart size={20} fill="white" />
+            <Group c="white" gap="xl">
+              <Group gap={6}>
+                <Heart size={22} fill="white" />
                 <Text fw={700}>{post.likeCount}</Text>
               </Group>
-              <Group gap={4}></Group>
+              <Group gap={6}>
+                <MessageCircle size={22} fill="white" />
+                <Text fw={700}>{post.commentCount}</Text>
+              </Group>
             </Group>
           </Center>
         </Overlay>

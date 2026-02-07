@@ -14,6 +14,7 @@ public record PostDto(
         LocalDateTime createdAt,
         AuthorDto author,
         Long likeCount,
+        Long commentCount,
         boolean isLikedByMe
 ) {
     public static PostDto fromEntity(
@@ -29,6 +30,7 @@ public record PostDto(
                 post.getCreatedAt(),
                 AuthorDto.fromEntity(post.getAuthor(), urlSigner),
                 post.getLikeCount(),
+                post.getCommentCount(),
                 isLikedByMe
         );
     }

@@ -31,9 +31,14 @@ import { formatTimeAgo } from '@/lib/date.ts'
 type PostCardProps = {
   post: Post
   isOwner?: boolean
+  onCommentClick?: () => void
 }
 
-export function PostCard({ post, isOwner = false }: PostCardProps) {
+export function PostCard({
+  post,
+  isOwner = false,
+  onCommentClick,
+}: PostCardProps) {
   const queryClient = useQueryClient()
 
   const [isLiked, setIsLiked] = useState(post.isLikedByMe)
@@ -152,7 +157,12 @@ export function PostCard({ post, isOwner = false }: PostCardProps) {
         >
           <Heart size={24} fill={isLiked ? 'currentColor' : 'none'} />
         </ActionIcon>
-        <ActionIcon variant="subtle" color="gray" size="lg">
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          size="lg"
+          onClick={onCommentClick}
+        >
           <MessageCircle size={22} />
         </ActionIcon>
         <ActionIcon variant="subtle" color="gray" size="lg">

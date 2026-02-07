@@ -41,6 +41,9 @@ public class Post {
     @Column(name = "like_count")
     private Long likeCount = 0L;
 
+    @Column(name = "comment_count")
+    private Long commentCount = 0L;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

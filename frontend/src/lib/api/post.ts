@@ -7,6 +7,7 @@ export type Post = {
   tags: Array<string>
   createdAt: string
   likeCount: number
+  commentCount: number
   isLikedByMe: boolean
   author: {
     id: number
@@ -20,6 +21,16 @@ export type CreatePostData = {
   caption: string
   imageUrl: string
   tags: Array<string>
+}
+
+export type Comment = {
+  id: number
+  content: string
+  createdAt: string
+  author: {
+    username: string
+    pfp: string
+  }
 }
 
 export const postApi = {
@@ -62,5 +73,15 @@ export const postApi = {
 
   toggleLike: async (postId: number) => {
     await api.post(`/posts/${postId}/like`)
+  },
+
+  getComments: async (postId: number): Promise<Array<Comment>> => {
+    const res = await api.get(`/posts/${postId}/comments`)
+    return res.data
+  },
+
+  addComment: async (postId: number, content: string): Promise<Comment> => {
+    const res = await api.post(`/posts/${postId}/comments`, { content })
+    return res.data
   },
 }
