@@ -34,9 +34,9 @@ public class PostController {
     @PostMapping
     public ResponseEntity<Post> createPost(
             @RequestBody CreatePostRequest createPostRequest,
-            @AuthenticationPrincipal AuthUserDetails userDetails
+            @AuthenticationPrincipal AuthUserDetails currentUser
     ) {
-        User author = userRepository.findById(userDetails.getId())
+        User author = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("user not found"));
 
         Post savedPost = postService.createPost(createPostRequest, author);
@@ -45,12 +45,13 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<List<PostDto>> getPosts(
-            @RequestParam(required = false) String username
+            @RequestParam(required = false) String username,
+            @AuthenticationPrincipal AuthUserDetails currentUser
     ) {
         if (username != null && !username.isBlank()) {
-            return ResponseEntity.ok(postService.getUserPosts(username));
+            return ResponseEntity.ok(postService.getUserPosts(username, currentUser.getUsername()));
         } else {
-            return ResponseEntity.ok(postService.getFeed());
+            return ResponseEntity.ok(postService.getFeed(currentUser.getUsername()));
         }
     }
 
@@ -58,10 +59,10 @@ public class PostController {
     public ResponseEntity<Map<String, String>> getUploadUrl(
             @RequestParam String filename,
             @RequestParam String contentType,
-            @AuthenticationPrincipal AuthUserDetails userDetails
+            @AuthenticationPrincipal AuthUserDetails currentUser
     ) {
         String sanitizedFilename = filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-        String key = "posts/" + userDetails.getId() + "/" + UUID.randomUUID() + "-" + sanitizedFilename;
+        String key = "posts/" + currentUser.getId() + "/" + UUID.randomUUID() + "-" + sanitizedFilename;
         String presignedUrl = s3Service.createUploadUrl(key, contentType);
 
         return ResponseEntity.ok(Map.of(
@@ -73,9 +74,18 @@ public class PostController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> getUploadUrl(
             @PathVariable Long id,
-            @AuthenticationPrincipal AuthUserDetails userDetails
+            @AuthenticationPrincipal AuthUserDetails currentUser
     ) {
-        postService.deletePost(id, userDetails.getUsername());
+        postService.deletePost(id, currentUser.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<Void> toggleLike(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal AuthUserDetails currentUser
+    ) {
+        postService.toggleLike(postId, currentUser.getUsername());
+        return ResponseEntity.ok().build();
     }
 }

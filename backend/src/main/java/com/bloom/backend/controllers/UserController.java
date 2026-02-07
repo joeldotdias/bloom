@@ -26,18 +26,18 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserProfile> getCurrentUser(
-            @AuthenticationPrincipal AuthUserDetails userDetails
+            @AuthenticationPrincipal AuthUserDetails currentUser
     ) {
-        UserProfile profile = userService.getUserProfile(userDetails.getUsername(), userDetails.getId());
+        UserProfile profile = userService.getUserProfile(currentUser.getUsername(), currentUser.getId());
         return ResponseEntity.ok(profile);
     }
 
     @PostMapping(value = "/me/pfp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadPfp(
             @RequestParam("image")MultipartFile file,
-            @AuthenticationPrincipal AuthUserDetails userDetails
+            @AuthenticationPrincipal AuthUserDetails currentUser
     ) {
-        String newPfpUrl = userService.uploadPfp(userDetails.getId(), file);
+        String newPfpUrl = userService.uploadPfp(currentUser.getId(), file);
         return ResponseEntity.ok(newPfpUrl);
     }
 
@@ -53,9 +53,9 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<UserProfile> updateProfile(
             @Valid @RequestBody UpdateProfileRequest updateProfileRequest,
-            @AuthenticationPrincipal AuthUserDetails userDetails
+            @AuthenticationPrincipal AuthUserDetails currentUser
     ) {
-        return ResponseEntity.ok(userService.updateProfileDetails(userDetails.getId(),  updateProfileRequest));
+        return ResponseEntity.ok(userService.updateProfileDetails(currentUser.getId(),  updateProfileRequest));
     }
 
     @GetMapping("/search")

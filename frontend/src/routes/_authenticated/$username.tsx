@@ -313,7 +313,7 @@ function GridItem({ post, onClick }: { post: Post; onClick: () => void }) {
             <Group c="white" gap="lg">
               <Group gap={4}>
                 <Heart size={20} fill="white" />
-                <Text fw={700}>0</Text>
+                <Text fw={700}>{post.likeCount}</Text>
               </Group>
               <Group gap={4}></Group>
             </Group>

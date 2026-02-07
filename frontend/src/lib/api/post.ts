@@ -6,6 +6,8 @@ export type Post = {
   viewUrl: string
   tags: Array<string>
   createdAt: string
+  likeCount: number
+  isLikedByMe: boolean
   author: {
     id: number
     username: string
@@ -56,5 +58,9 @@ export const postApi = {
 
   deletePost: async (postId: number) => {
     await api.delete(`/posts/${postId}`)
+  },
+
+  toggleLike: async (postId: number) => {
+    await api.post(`/posts/${postId}/like`)
   },
 }

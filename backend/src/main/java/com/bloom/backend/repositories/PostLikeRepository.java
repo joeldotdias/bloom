@@ -14,7 +14,7 @@ import java.util.Set;
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     Optional<PostLike> findByUserAndPost(User user, Post post);
 
-    boolean existByUserAndPost(User user, Post post);
+    boolean existsByUserAndPost(User user, Post post);
 
    @Query("SELECT pl.post.id FROM PostLike  pl WHERE pl.user.username = :username AND pl.post.id IN :postIds")
     Set<Long> findPostIdsLikedByUser(

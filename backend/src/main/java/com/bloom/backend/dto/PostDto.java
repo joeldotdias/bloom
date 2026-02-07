@@ -12,16 +12,24 @@ public record PostDto(
         String viewUrl,
         List<String> tags,
         LocalDateTime createdAt,
-        AuthorDto author
+        AuthorDto author,
+        Long likeCount,
+        boolean isLikedByMe
 ) {
-    public static PostDto fromEntity(Post post, Function<String, String> urlSigner) {
+    public static PostDto fromEntity(
+            Post post,
+            Function<String, String> urlSigner,
+            boolean isLikedByMe
+    ) {
         return new PostDto(
                 post.getId(),
                 post.getCaption(),
                 urlSigner.apply(post.getImageUrl()),
                 post.getTags(),
                 post.getCreatedAt(),
-                AuthorDto.fromEntity(post.getAuthor(), urlSigner)
+                AuthorDto.fromEntity(post.getAuthor(), urlSigner),
+                post.getLikeCount(),
+                isLikedByMe
         );
     }
 }

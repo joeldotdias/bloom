@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { notifications } from '@mantine/notifications'
+import { useEffect, useState } from 'react'
 import type { Post } from '@/lib/api/post.ts'
 import { postApi } from '@/lib/api/post.ts'
 import { formatTimeAgo } from '@/lib/date.ts'
@@ -34,6 +35,42 @@ type PostCardProps = {
 
 export function PostCard({ post, isOwner = false }: PostCardProps) {
   const queryClient = useQueryClient()
+
+  const [isLiked, setIsLiked] = useState(post.isLikedByMe)
+  const [likes, setLikes] = useState(post.likeCount)
+
+  useEffect(() => {
+    setIsLiked(post.isLikedByMe)
+    setLikes(post.likeCount)
+  }, [post.isLikedByMe, post.likeCount])
+
+  const toggleLikeMutation = useMutation({
+    mutationFn: () => postApi.toggleLike(post.id),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['posts'] })
+    },
+    onError: () => {
+      setIsLiked(!isLiked)
+      setLikes(isLiked ? likes + 1 : likes - 1)
+      notifications.show({
+        title: 'Error',
+        message: 'Like failed',
+        color: 'red',
+      })
+    },
+  })
+
+  const handleLike = () => {
+    if (isLiked) {
+      setLikes((prev) => Math.max(0, prev - 1))
+      setIsLiked(false)
+    } else {
+      setLikes((prev) => prev + 1)
+      setIsLiked(true)
+    }
+
+    toggleLikeMutation.mutate()
+  }
 
   const deletePostMutation = useMutation({
     mutationFn: postApi.deletePost,
@@ -106,9 +143,14 @@ export function PostCard({ post, isOwner = false }: PostCardProps) {
       </Card.Section>
 
       {/* INTERACTIONS */}
-      <Group gap="xs" mt="sm">
-        <ActionIcon variant="subtle" color="gray" size="lg">
-          <Heart size={22} />
+      <Group gap="lg" mt="sm">
+        <ActionIcon
+          variant="subtle"
+          color={isLiked ? 'red' : 'gray'}
+          size="lg"
+          onClick={handleLike}
+        >
+          <Heart size={24} fill={isLiked ? 'currentColor' : 'none'} />
         </ActionIcon>
         <ActionIcon variant="subtle" color="gray" size="lg">
           <MessageCircle size={22} />
@@ -139,7 +181,7 @@ export function PostCard({ post, isOwner = false }: PostCardProps) {
       <Group gap={6} mt="xs">
         {post.tags.map((tag) => (
           <Badge key={tag} size="xs" variant="dot" color="blue">
-            #{tag}
+            {tag}
           </Badge>
         ))}
       </Group>
