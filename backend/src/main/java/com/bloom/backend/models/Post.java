@@ -1,9 +1,7 @@
 package com.bloom.backend.models;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -44,6 +42,13 @@ public class Post {
     @Column(name = "comment_count")
     private Long commentCount = 0L;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "original_post_id")
+    private Post originalPost;
+
+    @Column(name = "repost_count")
+    private Long repostCount = 0L;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -59,5 +64,9 @@ public class Post {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isRepost() {
+        return originalPost != null;
     }
 }

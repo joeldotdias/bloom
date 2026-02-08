@@ -1,5 +1,20 @@
 import { api } from '@/lib/api/index.ts'
 
+export type Author = {
+  id: number
+  username: string
+  name: string
+  pfp: string
+}
+
+export type OriginalPostMeta = {
+  id: number
+  caption: string
+  viewUrl: string
+  createdAt: string
+  author: Author
+}
+
 export type Post = {
   id: number
   caption: string
@@ -8,13 +23,11 @@ export type Post = {
   createdAt: string
   likeCount: number
   commentCount: number
+  repostCount: number
   isLikedByMe: boolean
-  author: {
-    id: number
-    username: string
-    name: string
-    pfp: string
-  }
+  isRepostedByMe: boolean
+  author: Author
+  originalPost?: OriginalPostMeta | null
 }
 
 export type CreatePostData = {
@@ -83,5 +96,12 @@ export const postApi = {
   addComment: async (postId: number, content: string): Promise<Comment> => {
     const res = await api.post(`/posts/${postId}/comments`, { content })
     return res.data
+  },
+
+  toggleRepost: async (
+    postId: number,
+    content?: string | null,
+  ): Promise<void> => {
+    await api.post(`/posts/${postId}/repost`, { content })
   },
 }

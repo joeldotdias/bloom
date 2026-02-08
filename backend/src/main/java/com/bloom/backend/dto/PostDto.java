@@ -15,12 +15,16 @@ public record PostDto(
         AuthorDto author,
         Long likeCount,
         Long commentCount,
-        boolean isLikedByMe
+        Long repostCount,
+        boolean isLikedByMe,
+        boolean isRepostedByMe,
+        OriginalPostMeta originalPost
 ) {
     public static PostDto fromEntity(
             Post post,
             Function<String, String> urlSigner,
-            boolean isLikedByMe
+            boolean isLikedByMe,
+            boolean isRepostedByMe
     ) {
         return new PostDto(
                 post.getId(),
@@ -31,7 +35,12 @@ public record PostDto(
                 AuthorDto.fromEntity(post.getAuthor(), urlSigner),
                 post.getLikeCount(),
                 post.getCommentCount(),
-                isLikedByMe
+                post.getRepostCount(),
+                isLikedByMe,
+                isRepostedByMe,
+                (post.getOriginalPost() != null)
+                        ? OriginalPostMeta.fromEntity(post.getOriginalPost(), urlSigner)
+                        : null
         );
     }
 }

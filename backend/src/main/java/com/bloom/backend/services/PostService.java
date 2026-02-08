@@ -8,6 +8,8 @@ import com.bloom.backend.models.User;
 import com.bloom.backend.repositories.PostLikeRepository;
 import com.bloom.backend.repositories.PostRepository;
 import com.bloom.backend.repositories.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,7 @@ public class PostService {
     public List<PostDto> getFeed(String currentUsername) {
         List<Post> posts = postRepository.findAllByOrderByCreatedAtDesc();
         Set<Long> likedPostIds = getLikedPosts(posts, currentUsername);
+        Set<Long> repostedPostIds = getRepostedPosts(posts, currentUsername);
 
         return posts
                 .stream()
@@ -51,7 +54,8 @@ public class PostService {
                         PostDto.fromEntity(
                                 post,
                                 s3Service::createPresignedViewUrl,
-                                likedPostIds.contains(post.getId())
+                                likedPostIds.contains(post.getId()),
+                                repostedPostIds.contains(post.getId())
                         )
                 )
                 .toList();
@@ -60,6 +64,7 @@ public class PostService {
     public List<PostDto> getUserPosts(String authorUsername, String currentUsername) {
         List<Post> posts =  postRepository.findByAuthorUsernameOrderByCreatedAtDesc(authorUsername);
         Set<Long> likedPostIds = getLikedPosts(posts, currentUsername);
+        Set<Long> repostedPostIds = getRepostedPosts(posts, currentUsername);
 
         return posts
                 .stream()
@@ -67,7 +72,8 @@ public class PostService {
                         PostDto.fromEntity(
                                 post,
                                 s3Service::createPresignedViewUrl,
-                                likedPostIds.contains(post.getId())
+                                likedPostIds.contains(post.getId()),
+                                repostedPostIds.contains(post.getId())
                         )
                 )
                 .toList();
@@ -113,6 +119,41 @@ public class PostService {
         postRepository.save(post);
     }
 
+    @Transactional
+    public void toggleRepost(Long targetPostId, String username, String caption) {
+        User reposter = userRepository.findUserByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("user not found: " + username));
+
+        Post targetPost = postRepository.findById(targetPostId)
+                .orElseThrow(() -> new EntityNotFoundException("post not found: " + targetPostId));
+
+        // basically flattening the repost cycle until the root is found
+        Post rootPost = (targetPost.getOriginalPost() != null)
+                ? targetPost.getOriginalPost()
+                : targetPost;
+
+        Optional<Post> existingRepost = postRepository.findByAuthorAndOriginalPost(reposter, rootPost);
+
+        if (existingRepost.isPresent()) {
+            postRepository.delete(existingRepost.get());
+            postRepository.decrementRepostCount(rootPost.getId());
+        } else {
+            try {
+                Post repost = new Post();
+                        repost.setAuthor(reposter);
+                        repost.setOriginalPost(rootPost);
+                        repost.setCaption(caption);
+
+                postRepository.save(repost);
+                postRepository.incrementRepostCount(rootPost.getId());
+            } catch (DataIntegrityViolationException _) {
+                // this can only happen if the repost button was double clicked or somehow concurrent requests were fired
+                // i don't need to do anything here
+                // since the current state is what we'd end up with anyways
+            }
+        }
+    }
+
     private Set<Long> getLikedPosts(List<Post> posts, String username) {
         if (posts.isEmpty() || username == null) {
             return Collections.emptySet();
@@ -120,9 +161,18 @@ public class PostService {
 
         return postLikeRepository.findPostIdsLikedByUser(
                 username,
-                posts.stream()
-                        .map(Post::getId)
-                        .toList()
+                posts.stream().map(Post::getId).toList()
+        );
+    }
+
+    private Set<Long> getRepostedPosts(List<Post> posts, String username) {
+        if (posts.isEmpty() || username == null) {
+            return Collections.emptySet();
+        }
+
+        return postRepository.findPostIdsRepostedByUser(
+                username,
+                posts.stream().map(Post::getId).toList()
         );
     }
 }

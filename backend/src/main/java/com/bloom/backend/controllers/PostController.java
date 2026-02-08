@@ -111,4 +111,15 @@ public class PostController {
                 commentRequest.content()
         ));
     }
+
+    @PostMapping("/{postId}/repost")
+    public ResponseEntity<Void> toggleRepost(
+            @PathVariable Long postId,
+            @RequestBody(required = false) CreatePostRequest createPostRequest,
+            @AuthenticationPrincipal AuthUserDetails currentUser
+    ) {
+        String caption = (createPostRequest != null) ? createPostRequest.caption() : null;
+        postService.toggleRepost(postId, currentUser.getUsername(), caption);
+        return ResponseEntity.ok().build();
+    }
 }
