@@ -34,13 +34,14 @@ import {
   Settings,
   Share2,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { Post } from '@/lib/api/post.ts'
 import { userApi } from '@/lib/api/user.ts'
 import { EditProfileModal } from '@/components/EditProfileModal.tsx'
 import { AvatarUploadModal } from '@/components/PfpUploadModal.tsx'
 import { postApi } from '@/lib/api/post.ts'
 import { PostCard } from '@/components/PostCard.tsx'
+import { CommentDrawer } from '@/components/CommentDrawer.tsx'
 
 export const Route = createFileRoute('/_authenticated/$username')({
   component: UserProfile,
@@ -60,6 +61,13 @@ function UserProfile() {
     queryFn: () => postApi.getPosts(username),
   })
 
+  const originalPosts = useMemo(() => {
+    return posts?.filter((post) => !post.originalPost) || []
+  }, [posts])
+  const reposts = useMemo(() => {
+    return posts?.filter((post) => post.originalPost) || []
+  }, [posts])
+
   const [editModalOpen, { open: openEdit, close: closeEdit }] =
     useDisclosure(false)
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
@@ -67,6 +75,8 @@ function UserProfile() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [detailsOpen, { open: openDetails, close: closeDetails }] =
     useDisclosure(false)
+
+  const [activeCommentId, setActiveCommentId] = useState<number | null>(null)
 
   const handleFileSelect = (file: File | null) => {
     if (file) {
@@ -233,27 +243,19 @@ function UserProfile() {
           </Tabs.List>
 
           <Tabs.Panel value="posts" pt="lg">
-            {isPostsLoading ? (
-              <SimpleGrid cols={3} spacing="xs">
-                {Array(6)
-                  .fill(0)
-                  .map((_, i) => (
-                    <AspectRatio key={i} ratio={1}>
-                      <Skeleton h="100%" w="100%" />
-                    </AspectRatio>
-                  ))}
-              </SimpleGrid>
-            ) : (
-              <SimpleGrid cols={3} spacing="xs">
-                {posts?.map((post) => (
-                  <GridItem
-                    key={post.id}
-                    post={post}
-                    onClick={() => handlePostSelect(post)}
-                  />
-                ))}
-              </SimpleGrid>
-            )}
+            <GridContent
+              posts={originalPosts}
+              loading={isPostsLoading}
+              onPostClick={handlePostSelect}
+            />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="reposts" pt="lg">
+            <GridContent
+              posts={reposts}
+              loading={isPostsLoading}
+              onPostClick={handlePostSelect}
+            />
           </Tabs.Panel>
         </Tabs>
       </div>
@@ -271,6 +273,9 @@ function UserProfile() {
           <PostCard
             post={selectedPost}
             isOwner={username === selectedPost.author.username}
+            onCommentClick={() => {
+              setActiveCommentId(selectedPost.id)
+            }}
           />
         )}
       </Modal>
@@ -290,12 +295,63 @@ function UserProfile() {
           />
         </>
       )}
+
+      <CommentDrawer
+        postId={activeCommentId}
+        onClose={() => setActiveCommentId(null)}
+      />
     </Container>
+  )
+}
+
+function GridContent({
+  posts,
+  loading,
+  onPostClick,
+}: {
+  posts: Array<Post>
+  loading: boolean
+  onPostClick: (post: Post) => void
+}) {
+  if (loading) {
+    return (
+      <SimpleGrid cols={3} spacing="xs">
+        {Array(6)
+          .fill(0)
+          .map((_, i) => (
+            <AspectRatio key={i} ratio={1}>
+              <Skeleton h="100%" w="100%" />
+            </AspectRatio>
+          ))}
+      </SimpleGrid>
+    )
+  }
+
+  if (posts.length === 0) {
+    return (
+      <Text c="dimmed" ta="center" mt="xl">
+        Nothing here
+      </Text>
+    )
+  }
+
+  return (
+    <SimpleGrid cols={3} spacing="xs">
+      {posts.map((post) => (
+        <GridItem key={post.id} post={post} onClick={() => onPostClick(post)} />
+      ))}
+    </SimpleGrid>
   )
 }
 
 function GridItem({ post, onClick }: { post: Post; onClick: () => void }) {
   const [isHovered, setIsHovered] = useState(false)
+
+  const imageUrl = post.originalPost ? post.originalPost.viewUrl : post.viewUrl
+
+  if (!imageUrl) {
+    return null
+  }
 
   return (
     <Box
@@ -305,7 +361,7 @@ function GridItem({ post, onClick }: { post: Post; onClick: () => void }) {
       onClick={onClick}
     >
       <AspectRatio ratio={1}>
-        <Image src={post.viewUrl} alt={post.caption} />
+        <Image src={imageUrl} alt={post.caption} />
       </AspectRatio>
 
       {isHovered && (

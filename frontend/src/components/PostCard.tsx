@@ -277,21 +277,23 @@ export function PostCard({
         </Group>
 
         {/* CAPTION */}
-        <Box mt="xs">
-          <Spoiler
-            maxHeight={45}
-            showLabel="more"
-            hideLabel="less"
-            transitionDuration={0}
-          >
-            <Text size="sm">
-              <Text span fw={700} mr="xs">
-                {post.author.username}
+        {post.caption && (
+          <Box mt="xs">
+            <Spoiler
+              maxHeight={45}
+              showLabel="more"
+              hideLabel="less"
+              transitionDuration={0}
+            >
+              <Text size="sm">
+                <Text span fw={700} mr="xs">
+                  {post.author.username}
+                </Text>
+                {post.caption}
               </Text>
-              {post.caption}
-            </Text>
-          </Spoiler>
-        </Box>
+            </Spoiler>
+          </Box>
+        )}
 
         {/* TAGS */}
         <Group gap={6} mt="xs">

@@ -13,6 +13,7 @@ import {
   Text,
   Textarea,
 } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { postApi } from '@/lib/api/post.ts'
 import { formatTimeAgo } from '@/lib/date.ts'
 
@@ -27,6 +28,7 @@ export function CommentDrawer({ postId, onClose }: CommentDrawerProps) {
   const queryClient = useQueryClient()
   const [content, setContent] = useState('')
   const isOpen = postId !== null
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const { data: comments, isLoading } = useQuery({
     queryKey: ['comments', postId],
@@ -57,6 +59,21 @@ export function CommentDrawer({ postId, onClose }: CommentDrawerProps) {
       size="md"
       title={<Text fw={700}>Comments</Text>}
       padding="md"
+      styles={
+        isDesktop
+          ? {
+              content: {
+                marginTop: '12px',
+                marginBottom: '12px',
+                marginRight: '12px',
+                height: 'calc(100vh - 24px)',
+                borderRadius: '16px',
+                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.15)',
+                border: '1px solid var(--mantine-color-gray-2)',
+              },
+            }
+          : undefined
+      }
     >
       <Stack h="calc(100vh - 80px)" justify="space-between">
         {/* COMMENTS LIST */}

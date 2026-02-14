@@ -100,8 +100,8 @@ export const postApi = {
 
   toggleRepost: async (
     postId: number,
-    content?: string | null,
+    caption?: string | null,
   ): Promise<void> => {
-    await api.post(`/posts/${postId}/repost`, { content })
+    await api.post(`/posts/${postId}/repost`, { caption })
   },
 }
